@@ -1,0 +1,465 @@
+/* ═══════════════════════════════════════════════════════════
+   CSV-QUERY  —  Hoja de estilos principal
+   Soporta tema claro (.theme-light) y oscuro (.theme-dark)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────────────────
+   TEMA OSCURO  (por defecto)
+   ────────────────────────────────────────────────────────── */
+.root {
+    -color-bg:          #0d0d0d;
+    -color-surface:     #111111;
+    -color-border:      #1e1e1e;
+    -color-accent:      #00ff88;
+    -color-accent-dim:  #00aa55;
+    -color-accent-glow: #00ff8822;
+    -color-text:        #cccccc;
+    -color-text-dim:    #888888;
+    -color-text-muted:  #555555;
+    -color-text-faint:  #333333;
+    -color-row-alt:     #161616;
+    -color-select:      #1a2a1a;
+    -color-email:       #00aa66;
+    -color-id:          #00ff88;
+    -color-dict-icon-bg:#1a1a2e;
+    -color-dict-icon:   #7060ff;
+    -color-editor-sel:  #00ff8833;
+    -color-active-tab-bg: #0d0d0d;
+    -color-id-row-bg:   #0d1a0d;
+    -font-mono: 'Consolas';
+}
+
+/* ──────────────────────────────────────────────────────────
+   TEMA CLARO
+   ────────────────────────────────────────────────────────── */
+.theme-light {
+    -color-bg:          #f4f6f8;
+    -color-surface:     #ffffff;
+    -color-border:      #dde1e7;
+    -color-accent:      #0a7c4f;
+    -color-accent-dim:  #0a5c3a;
+    -color-accent-glow: #0a7c4f22;
+    -color-text:        #1a1a2e;
+    -color-text-dim:    #4a4a6a;
+    -color-text-muted:  #7a7a9a;
+    -color-text-faint:  #aaaacc;
+    -color-row-alt:     #f9fafb;
+    -color-select:      #d0f0e4;
+    -color-email:       #0a5c9e;
+    -color-id:          #0a7c4f;
+    -color-dict-icon-bg:#eeeeff;
+    -color-dict-icon:   #5040cc;
+    -color-editor-sel:  #0a7c4f33;
+    -color-active-tab-bg: #f4f6f8;
+    -color-id-row-bg:   #e8f8f0;
+    -font-mono: 'Consolas';
+}
+
+/* ══════════════════════════════════════════════════════════
+   LAYOUT BASE
+   ══════════════════════════════════════════════════════════ */
+.root-pane {
+    -fx-background-color: -color-bg;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TOPBAR
+   ══════════════════════════════════════════════════════════ */
+.topbar {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.logo {
+    -fx-text-fill: -color-accent;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.topbar-separator {
+    -fx-background-color: -color-border;
+    -fx-min-width: 1;
+    -fx-min-height: 48;
+}
+
+.btn-topbar {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text-dim;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-padding: 0 20 0 20;
+    -fx-min-height: 48;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+}
+
+.btn-topbar:hover {
+    -fx-background-color: -color-border;
+    -fx-text-fill: -color-text;
+}
+
+.btn-execute {
+    -fx-background-color: -color-accent;
+    -fx-text-fill: #000000;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 0 20 0 20;
+    -fx-min-height: 48;
+    -fx-min-width: 160;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+}
+
+.btn-execute:hover {
+    -fx-background-color: -color-accent-dim;
+}
+
+.btn-theme {
+    -fx-background-color: -color-border;
+    -fx-text-fill: -color-text-dim;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-padding: 0 14 0 14;
+    -fx-min-height: 48;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+}
+
+.btn-theme:hover {
+    -fx-background-color: -color-accent-glow;
+    -fx-text-fill: -color-accent;
+}
+
+/* ══════════════════════════════════════════════════════════
+   EDITOR AREA
+   ══════════════════════════════════════════════════════════ */
+.editor-tabbar {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 38;
+}
+
+.editor-active-tab {
+    -fx-background-color: -color-active-tab-bg;
+    -fx-border-color: -color-accent transparent transparent transparent;
+    -fx-border-width: 2 0 0 0;
+    -fx-padding: 0 16 0 16;
+    -fx-min-height: 38;
+}
+
+.tab-icon {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-size: 11px;
+}
+
+.tab-filename {
+    -fx-text-fill: -color-text;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+.lbl-estado {
+    -fx-text-fill: -color-accent;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+.lbl-estado-error {
+    -fx-text-fill: #ff4444;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+.lbl-estado-running {
+    -fx-text-fill: #ffaa00;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+.editor-container {
+    -fx-background-color: -color-bg;
+    -fx-min-height: 280;
+}
+
+.line-numbers {
+    -fx-background-color: -color-surface;
+    -fx-padding: 16 12 16 12;
+    -fx-min-width: 48;
+}
+
+.line-number {
+    -fx-text-fill: -color-text-faint;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 13px;
+}
+
+.editor-textarea {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 13px;
+    -fx-padding: 16 16 16 8;
+    -fx-control-inner-background: transparent;
+    -fx-highlight-fill: -color-editor-sel;
+    -fx-border-width: 0;
+}
+
+.editor-textarea .content {
+    -fx-background-color: transparent;
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATUS BAR
+   ══════════════════════════════════════════════════════════ */
+.statusbar {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 1 0 1 0;
+    -fx-padding: 0 16 0 16;
+    -fx-min-height: 32;
+}
+
+.statusbar-label {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+.statusbar-value {
+    -fx-text-fill: -color-accent;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+.statusbar-meta {
+    -fx-text-fill: -color-text-faint;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESULT TABS
+   ══════════════════════════════════════════════════════════ */
+.results-tabbar {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 40;
+}
+
+.btn-tab {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-border-width: 0;
+    -fx-cursor: hand;
+    -fx-padding: 0 20 0 20;
+    -fx-min-height: 40;
+    -fx-background-radius: 0;
+}
+
+.btn-tab:hover {
+    -fx-text-fill: -color-text;
+    -fx-background-color: -color-border;
+}
+
+.btn-tab-active {
+    -fx-background-color: transparent;
+    -fx-text-fill: -color-accent;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-border-color: transparent transparent -color-accent transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-cursor: hand;
+    -fx-padding: 0 20 0 20;
+    -fx-min-height: 40;
+    -fx-background-radius: 0;
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESULTS TABLE
+   ══════════════════════════════════════════════════════════ */
+.results-table {
+    -fx-background-color: -color-bg;
+    -fx-border-width: 0;
+    -fx-table-cell-border-color: -color-border;
+    -fx-control-inner-background: -color-bg;
+    -fx-selection-bar: -color-select;
+    -fx-selection-bar-non-focused: -color-select;
+}
+
+.results-table .column-header-background {
+    -fx-background-color: -color-surface;
+}
+
+.results-table .column-header {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 1 1 0;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-text-muted;
+}
+
+.results-table .column-header .label {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.results-table .table-row-cell {
+    -fx-background-color: -color-bg;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.results-table .table-row-cell:odd {
+    -fx-background-color: -color-row-alt;
+}
+
+.results-table .table-row-cell:selected {
+    -fx-background-color: -color-select;
+}
+
+.results-table .table-cell {
+    -fx-text-fill: -color-text;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-padding: 8 12 8 12;
+}
+
+.cell-id {
+    -fx-text-fill: -color-id;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+.cell-email {
+    -fx-text-fill: -color-email;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+.table-placeholder {
+    -fx-text-fill: -color-text-faint;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   DATA DICTIONARY PANEL (derecha)
+   ══════════════════════════════════════════════════════════ */
+.dict-panel {
+    -fx-background-color: -color-surface;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 0 1;
+    -fx-min-width: 200;
+    -fx-max-width: 200;
+}
+
+.dict-header {
+    -fx-padding: 16 16 12 16;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.dict-icon {
+    -fx-background-color: -color-dict-icon-bg;
+    -fx-text-fill: -color-dict-icon;
+    -fx-padding: 6 8 6 8;
+    -fx-font-size: 14px;
+}
+
+.dict-title {
+    -fx-text-fill: -color-text;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.dict-version {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 9px;
+}
+
+.dict-section-title {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 14 16 8 16;
+}
+
+.dict-col-row {
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 16 10 16;
+}
+
+.dict-col-row-active {
+    -fx-background-color: -color-id-row-bg;
+    -fx-border-color: -color-accent-glow;
+    -fx-border-width: 0 0 0 3;
+    -fx-padding: 10 16 10 13;
+}
+
+.dict-col-name {
+    -fx-text-fill: -color-text-dim;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+}
+
+.dict-col-name-active {
+    -fx-text-fill: -color-accent;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.dict-col-type {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+.dict-col-type-active {
+    -fx-text-fill: -color-accent-dim;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+}
+
+/* ══════════════════════════════════════════════════════════
+   METADATA CARDS (FILAS / PESO)
+   ══════════════════════════════════════════════════════════ */
+.meta-cards-row {
+    -fx-padding: 0 8 16 8;
+}
+
+.meta-card {
+    -fx-background-color: -color-row-alt;
+    -fx-padding: 10 12 10 12;
+}
+
+.meta-card-label {
+    -fx-text-fill: -color-text-muted;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 9px;
+}
+
+.meta-card-value {
+    -fx-text-fill: -color-text;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
