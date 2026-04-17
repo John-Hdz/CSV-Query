@@ -1,0 +1,1 @@
+TRAER id, nombre DESDE "archivo.csv" DONDE edad ! 18;
