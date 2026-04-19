@@ -192,4 +192,11 @@ public class Lexer {
             System.out.println(pilaErrores.pop().toString());
         }
     }
+    public List<Token> getTablaSimbolos() {
+        return tablaSimbolos;
+    }
+
+    public List<Token> getPilaErrores() {
+        return new ArrayList<>(pilaErrores);
+    }
 }
