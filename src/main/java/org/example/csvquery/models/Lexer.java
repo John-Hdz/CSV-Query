@@ -7,11 +7,11 @@ import java.io.IOException;
 import java.util.*;
 
 public class Lexer {
-    // Estructuras de almacenamiento
+
     private List<Token> tablaSimbolos = new ArrayList<>();
     private Stack<Token> pilaErrores = new Stack<>();
 
-    // Matriz de transiciones: Map<EstadoActual, Map<Caracter, EstadoSiguiente>>
+    // Map<EstadoActual, Map<Caracter, EstadoSiguiente>>
     private Map<String, Map<String, String>> matrizTransicion = new HashMap<>();
     private List<String> columnasAlfabeto = new ArrayList<>();
 
@@ -19,12 +19,11 @@ public class Lexer {
         cargarAutómata(rutaCsvAutomata);
     }
 
-    // 1. Cargar la matriz de transición desde el CSV
+    // Cargar la matriz de transición desde el CSV
     private void cargarAutómata(String rutaCsv) {
         try (CSVReader reader = new CSVReader(new FileReader(rutaCsv))) {
             String[] encabezados = reader.readNext();
             if (encabezados != null) {
-                // Guardar los encabezados (el alfabeto) ignorando la primera columna ("Estado")
                 columnasAlfabeto.addAll(Arrays.asList(encabezados).subList(1, encabezados.length));
             }
 
@@ -47,7 +46,20 @@ public class Lexer {
         }
     }
 
-    // 2. Método para leer el archivo de texto y analizar tokens
+    /**
+     * Lee el archivo de código fuente carácter a carácter.
+     *
+     * CORRECCIÓN PRINCIPAL: Los estados "post-delimitador" del autómata (q3, q4, q6, q7,
+     * q16, q20, q21) se alcanzan consumiendo un delimitador que NO debe formar parte del
+     * lexema actual. La solución es un diseño de "lookahead":
+     *
+     *   1. Antes de appendear el carácter al lexema, se calcula el estado siguiente.
+     *   2. Si ese estado siguiente ES de aceptación-con-delimitador (delim-accept),
+     *      se emite el token con el lexema ACTUAL (sin incluir el delimitador),
+     *      y el delimitador se "regresa" para ser procesado de nuevo en q0.
+     *   3. Si el estado es de aceptación directa (sin consumir delimitador extra),
+     *      el carácter SÍ forma parte del token (ej. q9=!=, q10=coma, q11=;, etc.).
+     */
     public void analizarArchivo(String rutaCodigoFuente) {
         try (FileReader fr = new FileReader(rutaCodigoFuente)) {
             int caracter;
@@ -58,47 +70,106 @@ public class Lexer {
                 char c = (char) caracter;
                 String colKey = obtenerColumna(c);
 
-                // Obtener el siguiente estado
                 Map<String, String> filaEstado = matrizTransicion.get(estadoActual);
                 String estadoSiguiente = (filaEstado != null) ? filaEstado.get(colKey) : null;
 
                 if (estadoSiguiente != null) {
-                    lexemaActual.append(c);
-                    estadoActual = estadoSiguiente;
 
-                    // Comprobar si llegamos a un estado de aceptación que requiera corte (ej: post delimitador)
-                    // En tu tabla, q16, q20, q21, q23 suelen ser de aceptación de tokens completos.
-                    if (esEstadoDeAceptacion(estadoActual)) {
-                        procesarToken(lexemaActual.toString().trim(), estadoActual);
-                        lexemaActual.setLength(0); // Limpiar buffer
-                        estadoActual = "q0";       // Reiniciar autómata
-                    } else if (esEstadoDeError(estadoActual)) {
+                    // BUG FIX: Los estados post-delimitador significan que el carácter 'c'
+                    // es un delimitador que cierra el token anterior, NO parte del lexema.
+                    // En estos casos emitimos el token sin incluir 'c', y reprocessamos
+                    // 'c' desde q0 en la siguiente iteración.
+                    if (esEstadoPostDelimitador(estadoSiguiente)) {
+                        // Emitir el token acumulado hasta ahora
+                        if (lexemaActual.length() > 0) {
+                            procesarToken(lexemaActual.toString().trim(), estadoSiguiente);
+                            lexemaActual.setLength(0);
+                        }
+                        estadoActual = "q0";
+
+                        // Reprocessar el delimitador desde q0
+                        // (puede ser ws→ignorar, o coma/;/símbolo→su propio token)
+                        String colKey2 = obtenerColumna(c);
+                        Map<String, String> filaQ0 = matrizTransicion.get("q0");
+                        String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
+
+                        if (estadoDesdeQ0 != null) {
+                            // El delimitador es un token por sí mismo (ej: ',', ';', '*')
+                            if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
+                                // Tokens de un solo carácter: emitir inmediatamente
+                                procesarToken(String.valueOf(c), estadoDesdeQ0);
+                                estadoActual = "q0";
+                            } else {
+                                // Inicio de otro token (ej: letra, dígito, operador)
+                                lexemaActual.append(c);
+                                estadoActual = estadoDesdeQ0;
+                            }
+                        }
+                        // Si estadoDesdeQ0 es null (ej: whitespace sin transición definida
+                        // o no existe en la matriz), simplemente lo ignoramos → estadoActual = q0
+
+                    } else if (esEstadoDeAceptacionDirecta(estadoSiguiente)) {
+                        // BUG FIX: Tokens de un solo carácter que se aceptan inmediatamente
+                        // (coma, punto y coma, paréntesis, !=, >=, <=).
+                        // El carácter SÍ forma parte del lexema.
+                        lexemaActual.append(c);
+                        procesarToken(lexemaActual.toString().trim(), estadoSiguiente);
+                        lexemaActual.setLength(0);
+                        estadoActual = "q0";
+
+                    } else if (esEstadoDeError(estadoSiguiente)) {
+                        lexemaActual.append(c);
                         registrarError(lexemaActual.toString());
                         lexemaActual.setLength(0);
                         estadoActual = "q0";
+
+                    } else {
+                        // Estado intermedio: acumular carácter y continuar
+                        lexemaActual.append(c);
+                        estadoActual = estadoSiguiente;
                     }
+
                 } else {
-                    // Si no hay transición, forzamos el corte del token actual (si lo hay) y reiniciamos
+                    // Sin transición desde el estado actual con este carácter.
+                    // Emitir lo acumulado (si hay) y reiniciar.
                     if (lexemaActual.length() > 0) {
                         procesarToken(lexemaActual.toString().trim(), estadoActual);
                         lexemaActual.setLength(0);
                     }
                     estadoActual = "q0";
+
+                    // Intentar reprocessar el carácter actual desde q0
+                    String colKey2 = obtenerColumna(c);
+                    Map<String, String> filaQ0 = matrizTransicion.get("q0");
+                    String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
+                    if (estadoDesdeQ0 != null) {
+                        if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
+                            procesarToken(String.valueOf(c), estadoDesdeQ0);
+                        } else if (!esEstadoDeError(estadoDesdeQ0)) {
+                            lexemaActual.append(c);
+                            estadoActual = estadoDesdeQ0;
+                        }
+                    }
                 }
             }
+
+            // Fin de archivo: emitir token pendiente si lo hay
+            if (lexemaActual.length() > 0) {
+                procesarToken(lexemaActual.toString().trim(), estadoActual);
+            }
+
         } catch (IOException e) {
             System.err.println("Error al leer el código fuente: " + e.getMessage());
         }
     }
 
-    // 3. El Switch principal que asigna el ID y lo manda a la Tabla de Símbolos
+    // Switch principal que asigna el ID y lo manda a la Tabla de Símbolos
     private void procesarToken(String lexema, String estadoFinal) {
         if (lexema.isEmpty()) return;
 
-        int id = 4001; // ID por defecto (ej. Identificador)
+        int id = 4001;
         String nombre = "TOKEN_ID";
 
-        // Mapeo por switch case basado en el lexema
         switch (lexema.toUpperCase()) {
             // Palabras Reservadas (2000)
             case "TRAER":    id = 2001; nombre = "TOKEN_TRAER"; break;
@@ -137,11 +208,11 @@ public class Lexer {
             case "(": id = 3004; nombre = "TOKEN_PARENTESIS_ABRE"; break;
             case ")": id = 3005; nombre = "TOKEN_PARENTESIS_CIERRA"; break;
 
-            // Valores dinámicos (Caen en default y se validan por estado)
+            // Valores dinámicos validados por estado final
             default:
-                if (estadoFinal.equals("q20")) {
+                if (estadoFinal.equals("q17") || estadoFinal.equals("q20")) {
                     id = 4002; nombre = "TOKEN_ENTERO";
-                } else if (estadoFinal.equals("q21")) {
+                } else if (estadoFinal.equals("q19") || estadoFinal.equals("q21")) {
                     id = 4003; nombre = "TOKEN_FLOAT";
                 } else if (estadoFinal.equals("q23")) {
                     id = 4004; nombre = "TOKEN_STRING";
@@ -149,29 +220,58 @@ public class Lexer {
                 break;
         }
 
-        // Agregar a la tabla de símbolos
         tablaSimbolos.add(new Token(lexema, nombre, id));
     }
 
-    // 4. Manejo de Errores Léxicos
     private void registrarError(String lexema) {
         Token error = new Token(lexema, "TOKEN_ERROR_LEXICO", 5001);
         pilaErrores.push(error);
     }
 
-    // --- Utilidades ---
+    // --- Utils ---
     private String obtenerColumna(char c) {
         if (Character.isWhitespace(c)) return "ws";
         if (Character.isDigit(c)) return String.valueOf(c);
         if (Character.isLetter(c)) return String.valueOf(Character.toLowerCase(c));
-        return String.valueOf(c); // Para símbolos como = > < ! " ; * ( )
+        return String.valueOf(c);
     }
 
-    private boolean esEstadoDeAceptacion(String estado) {
-        // Modifica esto según tu diseño. Estos estados representan un token finalizado.
-        return estado.equals("q3") || estado.equals("q4") || estado.equals("q6") ||
-                estado.equals("q9") || estado.equals("q10") || estado.equals("q16") ||
-                estado.equals("q20") || estado.equals("q21") || estado.equals("q23");
+    /**
+     * Estados "post-delimitador": el autómata llega a estos estados habiendo consumido
+     * un carácter delimitador que cierra el token ANTERIOR. El delimitador NO debe
+     * incluirse en el lexema del token que se va a emitir.
+     *
+     * q16 = identificador terminado por ws o delimitador
+     * q20 = entero terminado por ws o delimitador
+     * q21 = float terminado por ws o delimitador
+     * q4  = '>' solo (sin '='), terminado al leer el siguiente char
+     * q7  = '<' solo (sin '='), terminado al leer el siguiente char
+     */
+    private boolean esEstadoPostDelimitador(String estado) {
+        return estado.equals("q16") || estado.equals("q20") || estado.equals("q21")
+                || estado.equals("q4")  || estado.equals("q7");
+    }
+
+    /**
+     * Estados de aceptación directa: el carácter que provocó la transición SÍ pertenece
+     * al token (es parte del lexema) y el token queda completo en ese instante.
+     *
+     * q1  = '='
+     * q3  = '>='
+     * q6  = '<='
+     * q9  = '!='
+     * q10 = ','
+     * q11 = ';'
+     * q12 = '*'
+     * q13 = '('
+     * q14 = ')'
+     * q23 = cadena (la " de cierre la incluimos en el lexema para poder stripearla)
+     */
+    private boolean esEstadoDeAceptacionDirecta(String estado) {
+        return estado.equals("q1")  || estado.equals("q3")  || estado.equals("q6")  ||
+                estado.equals("q9")  || estado.equals("q10") || estado.equals("q11") ||
+                estado.equals("q12") || estado.equals("q13") || estado.equals("q14") ||
+                estado.equals("q23");
     }
 
     private boolean esEstadoDeError(String estado) {
@@ -192,6 +292,7 @@ public class Lexer {
             System.out.println(pilaErrores.pop().toString());
         }
     }
+
     public List<Token> getTablaSimbolos() {
         return tablaSimbolos;
     }

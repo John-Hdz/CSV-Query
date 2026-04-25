@@ -32,10 +32,6 @@ public class PandasTranslator {
         this.tokens = tokens;
     }
 
-    // ══════════════════════════════════════════════════════════
-    //  PUNTO DE ENTRADA
-    // ══════════════════════════════════════════════════════════
-
     /**
      * Genera y devuelve el script Python completo.
      * Lanza IllegalArgumentException si la sintaxis es inválida.

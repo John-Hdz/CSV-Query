@@ -27,13 +27,12 @@ public class PandasRunner {
     public static Resultado ejecutar(String scriptPython, int timeoutSeg) {
         File scriptTemp = null;
         try {
-            // 1. Escribir el script en un archivo temporal
+            // Escribir el script en un archivo temporal
             scriptTemp = File.createTempFile("csvquery_", ".py");
             scriptTemp.deleteOnExit();
             Files.writeString(scriptTemp.toPath(), scriptPython, StandardCharsets.UTF_8);
 
-            // 2. Construir el proceso
-            // Intenta "python3" primero (Linux/Mac), luego "python" (Windows)
+            // Construir el proceso
             String pythonCmd = encontrarPython();
 
             ProcessBuilder pb = new ProcessBuilder(pythonCmd, scriptTemp.getAbsolutePath());
@@ -42,7 +41,7 @@ public class PandasRunner {
 
             Process proceso = pb.start();
 
-            // 3. Leer stdout y stderr en paralelo para evitar bloqueos
+            //Leer stdout y stderr en paralelo para evitar bloqueos
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
 
@@ -67,7 +66,7 @@ public class PandasRunner {
             hiloOut.start();
             hiloErr.start();
 
-            // 4. Esperar con timeout
+            //Esperar con timeout
             boolean termino = proceso.waitFor(timeoutSeg, java.util.concurrent.TimeUnit.SECONDS);
             hiloOut.join(2000);
             hiloErr.join(2000);
@@ -96,7 +95,7 @@ public class PandasRunner {
 
     /**
      * Detecta el comando Python disponible en el sistema.
-     * Prueba "python3" y luego "python".
+     *
      */
     private static String encontrarPython() {
         for (String cmd : new String[]{"python3", "python"}) {
