@@ -57,7 +57,7 @@ public class MainController implements Initializable {
     private List<String> logConsola     = new ArrayList<>();
     private String       ultimoScriptPy = "";
 
-    // ⚠ Ajusta esta ruta según donde pongas tu automata.csv en el proyecto
+    // ruta de la matriz de transicion
     private static final String RUTA_AUTOMATA =
             "src/main/resources/CSV/Matriz de transicion 2.csv";
 
@@ -148,7 +148,7 @@ public class MainController implements Initializable {
         setEstado("ANALIZANDO...", "lbl-estado-running");
         log("INFO", "Iniciando análisis léxico...");
 
-        // ── 1. Escribir consulta en archivo temporal para el Lexer ────
+        // Escribir consulta en archivo temporal para el Lexer ────
         File tempQuery = null;
         try {
             tempQuery = File.createTempFile("csvquery_input_", ".txt");
@@ -163,7 +163,7 @@ public class MainController implements Initializable {
             return;
         }
 
-        // ── 2. Lexer con autómata ─────────────────────────────────────
+        // Lexer con autómata ─────────────────────────────────────
         Lexer lexer = new Lexer(RUTA_AUTOMATA);
         lexer.analizarArchivo(tempQuery.getAbsolutePath());
         tempQuery.delete();
@@ -185,7 +185,7 @@ public class MainController implements Initializable {
             return;
         }
 
-        // ── 3. Traducir tokens → script Python/pandas ─────────────────
+        //Traducir tokens → script Python/pandas ─────────────────
         setEstado("GENERANDO SCRIPT...", "lbl-estado-running");
         PandasTranslator translator = new PandasTranslator(ultimosTokens);
         try {
@@ -201,7 +201,7 @@ public class MainController implements Initializable {
             return;
         }
 
-        // ── 4. Ejecutar pandas ────────────────────────────────────────
+        // Ejecutar pandas ────────────────────────────────────────
         setEstado("EJECUTANDO...", "lbl-estado-running");
         log("INFO", "Ejecutando script con pandas...");
         PandasRunner.Resultado resultado = PandasRunner.ejecutar(ultimoScriptPy, 30);
@@ -216,7 +216,7 @@ public class MainController implements Initializable {
 
         log("INFO", "Consulta ejecutada con éxito.");
 
-        // ── 5. Mostrar resultado ──────────────────────────────────────
+        // Mostrar resultado ──────────────────────────────────────
         String salida = resultado.salida();
         if (!salida.contains(",") && !salida.contains("\n")) {
             mostrarEscalar(salida);
@@ -354,7 +354,7 @@ public class MainController implements Initializable {
             ));
         }
 
-        // Mostrar script generado al final
+        // Mostrar script generado
         if (!ultimoScriptPy.isEmpty()) {
             items.add(FXCollections.observableArrayList("", ""));
             items.add(FXCollections.observableArrayList("SCRIPT", "── Script Python generado ──"));

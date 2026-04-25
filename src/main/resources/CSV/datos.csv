@@ -1,0 +1,31 @@
+id,nombre,edad,email,ciudad,pais,salario,departamento
+001,Carlos Mendoza,28,c.mendoza@kinetic.io,Madrid,ES,45000,Ingeniería
+002,Elena Rossi,34,rossi.e@arch.net,Roma,IT,62000,Diseño
+003,Hiroshi Tanaka,22,h_tanaka@void.so,Tokio,JP,38000,Soporte
+004,Sara Ahmed,45,s.ahmed@global.sy,Dubái,AE,91000,Dirección
+005,Luis Fernández,31,l.fernandez@nexo.mx,Ciudad de México,MX,47000,Ingeniería
+006,Amara Diallo,27,a.diallo@pulse.sn,Dakar,SN,33000,Marketing
+007,Yuki Nakamura,39,y.nakamura@synth.jp,Osaka,JP,74000,Ingeniería
+008,Fatima Al-Hassan,52,f.hassan@core.ae,Abu Dabi,AE,110000,Dirección
+009,Marco Bianchi,25,m.bianchi@loop.it,Milán,IT,41000,Soporte
+010,Valentina Ruiz,36,v.ruiz@axis.co,Bogotá,CO,56000,Recursos Humanos
+011,Kenji Watanabe,43,k.watanabe@kode.jp,Tokio,JP,88000,Ingeniería
+012,Priya Sharma,29,p.sharma@nova.in,Mumbai,IN,44000,Diseño
+013,Ahmed Khalil,33,a.khalil@mesh.eg,El Cairo,EG,51000,Marketing
+014,Sofia Petrov,41,s.petrov@arc.ru,Moscú,RU,67000,Ingeniería
+015,Diego Morales,24,d.morales@flow.pe,Lima,PE,35000,Soporte
+016,Nadia Boucher,38,n.boucher@mint.fr,París,FR,72000,Diseño
+017,Kwame Asante,30,k.asante@grid.gh,Accra,GH,39000,Marketing
+018,Isabella Costa,47,i.costa@hub.br,São Paulo,BR,83000,Dirección
+019,Ravi Patel,26,r.patel@byte.in,Bangalore,IN,42000,Ingeniería
+020,Hana Müller,35,h.muller@kern.de,Berlín,DE,69000,Recursos Humanos
+021,Omar Suleiman,55,o.suleiman@gate.jo,Ammán,JO,95000,Dirección
+022,Camila Torres,23,c.torres@zip.cl,Santiago,CL,31000,Soporte
+023,Liam O'Brien,44,l.obrien@tide.ie,Dublín,IE,79000,Ingeniería
+024,Zara Malik,32,z.malik@dot.pk,Karachi,PK,48000,Marketing
+025,Chen Wei,37,c.wei@stack.cn,Shanghái,CN,71000,Ingeniería
+026,Aisha Nkosi,28,a.nkosi@root.za,Johannesburgo,ZA,40000,Diseño
+027,Tomás García,50,t.garcia@wave.ar,Buenos Aires,AR,86000,Dirección
+028,Mei Lin,21,m.lin@spark.cn,Pekín,CN,29000,Soporte
+029,Andrei Popescu,40,a.popescu@node.ro,Bucarest,RO,58000,Ingeniería
+030,Layla Ibrahim,33,l.ibrahim@link.eg,Alejandría,EG,53000,Recursos Humanos
