@@ -46,20 +46,7 @@ public class Lexer {
         }
     }
 
-    /**
-     * Lee el archivo de código fuente carácter a carácter.
-     *
-     * CORRECCIÓN PRINCIPAL: Los estados "post-delimitador" del autómata (q3, q4, q6, q7,
-     * q16, q20, q21) se alcanzan consumiendo un delimitador que NO debe formar parte del
-     * lexema actual. La solución es un diseño de "lookahead":
-     *
-     *   1. Antes de appendear el carácter al lexema, se calcula el estado siguiente.
-     *   2. Si ese estado siguiente ES de aceptación-con-delimitador (delim-accept),
-     *      se emite el token con el lexema ACTUAL (sin incluir el delimitador),
-     *      y el delimitador se "regresa" para ser procesado de nuevo en q0.
-     *   3. Si el estado es de aceptación directa (sin consumir delimitador extra),
-     *      el carácter SÍ forma parte del token (ej. q9=!=, q10=coma, q11=;, etc.).
-     */
+
     public void analizarArchivo(String rutaCodigoFuente) {
         try (FileReader fr = new FileReader(rutaCodigoFuente)) {
             int caracter;
@@ -75,10 +62,6 @@ public class Lexer {
 
                 if (estadoSiguiente != null) {
 
-                    // BUG FIX: Los estados post-delimitador significan que el carácter 'c'
-                    // es un delimitador que cierra el token anterior, NO parte del lexema.
-                    // En estos casos emitimos el token sin incluir 'c', y reprocessamos
-                    // 'c' desde q0 en la siguiente iteración.
                     if (esEstadoPostDelimitador(estadoSiguiente)) {
                         // Emitir el token acumulado hasta ahora
                         if (lexemaActual.length() > 0) {
@@ -119,7 +102,7 @@ public class Lexer {
 
                     } else if (esEstadoDeError(estadoSiguiente)) {
                         lexemaActual.append(c);
-                        registrarError(lexemaActual.toString());
+                        registrarError(lexemaActual.toString(), estadoSiguiente);
                         lexemaActual.setLength(0);
                         estadoActual = "q0";
 
@@ -145,7 +128,9 @@ public class Lexer {
                     if (estadoDesdeQ0 != null) {
                         if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
                             procesarToken(String.valueOf(c), estadoDesdeQ0);
-                        } else if (!esEstadoDeError(estadoDesdeQ0)) {
+                        } else if (esEstadoDeError(estadoDesdeQ0)) {
+                            registrarError(String.valueOf(c), estadoDesdeQ0);
+                        } else {
                             lexemaActual.append(c);
                             estadoActual = estadoDesdeQ0;
                         }
@@ -155,7 +140,12 @@ public class Lexer {
 
             // Fin de archivo: emitir token pendiente si lo hay
             if (lexemaActual.length() > 0) {
-                procesarToken(lexemaActual.toString().trim(), estadoActual);
+                if (estadoActual.equals("q22")) {
+                    // Cadena que nunca se cerró con "
+                    registrarError(lexemaActual.toString(), "qE2");
+                } else {
+                    procesarToken(lexemaActual.toString().trim(), estadoActual);
+                }
             }
 
         } catch (IOException e) {
@@ -223,9 +213,30 @@ public class Lexer {
         tablaSimbolos.add(new Token(lexema, nombre, id));
     }
 
-    private void registrarError(String lexema) {
-        Token error = new Token(lexema, "TOKEN_ERROR_LEXICO", 5001);
-        pilaErrores.push(error);
+    private void registrarError(String lexema, String estadoError) {
+        String nombre;
+        int id;
+
+        switch (estadoError) {
+            case "qE":
+                nombre = "ERROR_OPERADOR_INCOMPLETO";
+                id = 5001;
+                break;
+            case "qE2":
+                nombre = "ERROR_CADENA_SIN_CERRAR";
+                id = 5002;
+                break;
+            case "qE3":
+                nombre = "ERROR_NUMERO_INVALIDO";
+                id = 5003;
+                break;
+            default:
+                nombre = "TOKEN_ERROR_LEXICO";
+                id = 5000;
+                break;
+        }
+
+        pilaErrores.push(new Token(lexema, nombre, id));
     }
 
     // --- Utils ---
@@ -236,37 +247,13 @@ public class Lexer {
         return String.valueOf(c);
     }
 
-    /**
-     * Estados "post-delimitador": el autómata llega a estos estados habiendo consumido
-     * un carácter delimitador que cierra el token ANTERIOR. El delimitador NO debe
-     * incluirse en el lexema del token que se va a emitir.
-     *
-     * q16 = identificador terminado por ws o delimitador
-     * q20 = entero terminado por ws o delimitador
-     * q21 = float terminado por ws o delimitador
-     * q4  = '>' solo (sin '='), terminado al leer el siguiente char
-     * q7  = '<' solo (sin '='), terminado al leer el siguiente char
-     */
+
     private boolean esEstadoPostDelimitador(String estado) {
         return estado.equals("q16") || estado.equals("q20") || estado.equals("q21")
                 || estado.equals("q4")  || estado.equals("q7");
     }
 
-    /**
-     * Estados de aceptación directa: el carácter que provocó la transición SÍ pertenece
-     * al token (es parte del lexema) y el token queda completo en ese instante.
-     *
-     * q1  = '='
-     * q3  = '>='
-     * q6  = '<='
-     * q9  = '!='
-     * q10 = ','
-     * q11 = ';'
-     * q12 = '*'
-     * q13 = '('
-     * q14 = ')'
-     * q23 = cadena (la " de cierre la incluimos en el lexema para poder stripearla)
-     */
+
     private boolean esEstadoDeAceptacionDirecta(String estado) {
         return estado.equals("q1")  || estado.equals("q3")  || estado.equals("q6")  ||
                 estado.equals("q9")  || estado.equals("q10") || estado.equals("q11") ||
@@ -280,14 +267,14 @@ public class Lexer {
 
     // Métodos para imprimir resultados
     public void imprimirTablaSimbolos() {
-        System.out.println("\n--- TABLA DE SÍMBOLOS ---");
+        System.out.println("\n--- TABLA DE SIMBOLOS ---");
         for (Token t : tablaSimbolos) {
             System.out.println(t.toString());
         }
     }
 
     public void imprimirPilaErrores() {
-        System.out.println("\n--- PILA DE ERRORES LÉXICOS ---");
+        System.out.println("\n--- PILA DE ERRORES LEXICOS ---");
         while (!pilaErrores.isEmpty()) {
             System.out.println(pilaErrores.pop().toString());
         }
