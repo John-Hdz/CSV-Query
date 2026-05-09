@@ -1,1 +1,1 @@
-TRAER id, nombre DESDE "archivo.csv" DONDE edad ! 18;
+TRAER id, nombre DESDE "archivo.csv" DONDE edad > 18. y nombre ! "Juan;

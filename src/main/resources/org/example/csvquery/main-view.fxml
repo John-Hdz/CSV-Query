@@ -81,19 +81,43 @@
 
                 <!-- ── Results Tabs ── -->
                 <HBox alignment="CENTER_LEFT" styleClass="results-tabbar">
-                    <Button fx:id="tabResultado" text="🟩  RESULTADO DE CONSULTA"   onAction="#onTabResultado" styleClass="btn-tab-active"/>
-                    <Button fx:id="tabTokens"    text="🔷  ANÁLISIS LÉXICO (TOKENS)" onAction="#onTabTokens"    styleClass="btn-tab"/>
+                    <Button fx:id="tabResultado" text="🟩  RESULTADO DE CONSULTA"    onAction="#onTabResultado" styleClass="btn-tab-active"/>
+                    <Button fx:id="tabLexico"    text="🌿  ANÁLISIS SINTÁCTICO"           onAction="#onTabLexico"    styleClass="btn-tab"/>
+                    <Button fx:id="tabTokens"    text="🔷  TOKENS"                   onAction="#onTabTokens"    styleClass="btn-tab"/>
                     <Button fx:id="tabConsola"   text="🖥  CONSOLA DE COMPILACIÓN"   onAction="#onTabConsola"   styleClass="btn-tab"/>
-                    <Button fx:id="tabLexico"    text="Léxico" onAction="#onTabLexico"  styleClass="btn-tab"
-                             />
                 </HBox>
 
-                <!-- ── Results Table ── -->
-                <TableView fx:id="tablaResultados" VBox.vgrow="ALWAYS" styleClass="results-table">
-                    <placeholder>
-                        <Label text="Ejecuta una consulta para ver los resultados" styleClass="table-placeholder"/>
-                    </placeholder>
-                </TableView>
+                <!-- ══════════════════════════════════════════════════════
+                     StackPane: apila tablaResultados y panelLexico.
+                     Solo uno tiene visible="true" a la vez.
+                     VBox.vgrow="ALWAYS" hace que ocupe todo el espacio
+                     restante igual que antes lo hacía la tabla sola.
+                ═══════════════════════════════════════════════════════ -->
+                <StackPane VBox.vgrow="ALWAYS">
+
+                    <!-- Tabla de resultados / tokens / consola -->
+                    <TableView fx:id="tablaResultados"
+                               styleClass="results-table"
+                               visible="true">
+                        <placeholder>
+                            <Label text="Ejecuta una consulta para ver los resultados"
+                                   styleClass="table-placeholder"/>
+                        </placeholder>
+                    </TableView>
+
+                    <!-- Panel de análisis léxico por cláusula -->
+                    <ScrollPane fx:id="panelLexico"
+                                fitToWidth="true"
+                                visible="false"
+                                styleClass="panel-lexico-scroll">
+                        <content>
+                            <VBox fx:id="vboxLexico"
+                                  spacing="10"
+                                  style="-fx-padding: 14 14 14 14;"/>
+                        </content>
+                    </ScrollPane>
+
+                </StackPane>
 
             </VBox>
 

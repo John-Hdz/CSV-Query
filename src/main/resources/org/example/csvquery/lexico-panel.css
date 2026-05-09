@@ -1,0 +1,285 @@
+/* ═══════════════════════════════════════════════════════════════
+   PANEL LÉXICO — estilos por cláusula
+   Agregar al archivo .css principal del proyecto (app.css / styles.css)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Stat cards (barra de resumen) ────────────────────────────── */
+.stat-card {
+    -fx-background-color: #2a2d3a;
+    -fx-background-radius: 8;
+    -fx-min-width: 110;
+}
+
+.stat-card-danger {
+    -fx-background-color: #3d1f1f;
+    -fx-background-radius: 8;
+    -fx-min-width: 110;
+}
+
+.stat-val {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #e0e4f0;
+}
+
+.stat-val-danger {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f08080;
+}
+
+.stat-lbl {
+    -fx-font-size: 11px;
+    -fx-text-fill: #8890a8;
+}
+
+/* ── Caja de cláusula ─────────────────────────────────────────── */
+.clausula-ok {
+    -fx-background-color: #1e2130;
+    -fx-background-radius: 10;
+    -fx-border-color: #2e3348;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 10;
+}
+
+.clausula-error {
+    -fx-background-color: #2a1a1a;
+    -fx-background-radius: 10;
+    -fx-border-color: #6b2b2b;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+}
+
+/* ── Textos dentro de la cláusula ─────────────────────────────── */
+.clausula-nombre {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #c8cfe8;
+}
+
+.clausula-desc {
+    -fx-font-size: 11px;
+    -fx-text-fill: #6a7090;
+}
+
+/* ── Badges (✓ OK / ⚠ ERROR) ──────────────────────────────────── */
+.badge-ok {
+    -fx-background-color: #1a3d2a;
+    -fx-text-fill: #5cba7d;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 4;
+}
+
+.badge-error {
+    -fx-background-color: #3d1a1a;
+    -fx-text-fill: #e06060;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 4;
+}
+
+/* ── Chips de tokens ──────────────────────────────────────────── */
+
+/* Palabra reservada — azul */
+.token-chip-kw {
+    -fx-background-color: #1a2540;
+    -fx-background-radius: 6;
+    -fx-border-color: #2a3f70;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-min-width: 70;
+}
+
+/* Operador — ámbar */
+.token-chip-op {
+    -fx-background-color: #2d2010;
+    -fx-background-radius: 6;
+    -fx-border-color: #6b4a10;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-min-width: 70;
+}
+
+/* Símbolo especial — morado */
+.token-chip-sym {
+    -fx-background-color: #221a35;
+    -fx-background-radius: 6;
+    -fx-border-color: #4a3070;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-min-width: 70;
+}
+
+/* Valor (ID, entero, float, string) — verde */
+.token-chip-val {
+    -fx-background-color: #152215;
+    -fx-background-radius: 6;
+    -fx-border-color: #2a5030;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-min-width: 70;
+}
+
+/* Error — rojo */
+.token-chip-error {
+    -fx-background-color: #3d1010;
+    -fx-background-radius: 6;
+    -fx-border-color: #8b2020;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-min-width: 70;
+}
+
+/* Lexema (texto principal del chip) */
+.chip-lexema {
+    -fx-font-family: "Monospaced", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-text-fill: #dde2f5;
+    -fx-font-weight: bold;
+}
+
+.chip-lexema-error {
+    -fx-font-family: "Monospaced", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-text-fill: #f08080;
+    -fx-font-weight: bold;
+}
+
+/* Subtítulo del chip (tipo de token) */
+.chip-tipo {
+    -fx-font-size: 10px;
+    -fx-text-fill: #6a7090;
+}
+
+/* ── Label vacío ──────────────────────────────────────────────── */
+.lbl-empty {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6a7090;
+    -fx-padding: 20 0 0 4;
+}
+
+/* ── Tema claro (si el usuario activa .theme-light en el rootPane) ── */
+.theme-light .stat-card         { -fx-background-color: #f0f2f8; }
+.theme-light .stat-card-danger  { -fx-background-color: #fdeaea; }
+.theme-light .stat-val          { -fx-text-fill: #1a1e2e; }
+.theme-light .stat-val-danger   { -fx-text-fill: #a32020; }
+.theme-light .stat-lbl          { -fx-text-fill: #6a7090; }
+
+.theme-light .clausula-ok       { -fx-background-color: #f5f7ff; -fx-border-color: #d0d5e8; }
+.theme-light .clausula-error    { -fx-background-color: #fff5f5; -fx-border-color: #e8a0a0; }
+.theme-light .clausula-nombre   { -fx-text-fill: #1a1e2e; }
+.theme-light .clausula-desc     { -fx-text-fill: #8890a8; }
+
+.theme-light .badge-ok          { -fx-background-color: #e0f5e9; -fx-text-fill: #1a6b3a; }
+.theme-light .badge-error       { -fx-background-color: #fdeaea; -fx-text-fill: #a32020; }
+
+.theme-light .token-chip-kw     { -fx-background-color: #eef2ff; -fx-border-color: #a0b0e8; }
+.theme-light .token-chip-op     { -fx-background-color: #fff8ee; -fx-border-color: #e0b870; }
+.theme-light .token-chip-sym    { -fx-background-color: #f5eeff; -fx-border-color: #c0a0e8; }
+.theme-light .token-chip-val    { -fx-background-color: #eef8ee; -fx-border-color: #80c090; }
+.theme-light .token-chip-error  { -fx-background-color: #fdeaea; -fx-border-color: #d07070; }
+
+.theme-light .chip-lexema       { -fx-text-fill: #1a1e2e; }
+.theme-light .chip-tipo         { -fx-text-fill: #8890a8; }
+.theme-light .lbl-empty         { -fx-text-fill: #8890a8; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ÁRBOL AST — estilos de nodos
+   ═══════════════════════════════════════════════════════════════ */
+
+.ast-conector {
+    -fx-font-family: "Monospaced", "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-text-fill: #4a5070;
+}
+
+/* Nodo raíz — azul intenso */
+.ast-nodo-consulta {
+    -fx-background-color: #1a2a4a;
+    -fx-background-radius: 6;
+    -fx-border-color: #3a5a9a;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+}
+
+/* Cláusula — azul medio */
+.ast-nodo-clausula {
+    -fx-background-color: #1a2535;
+    -fx-background-radius: 6;
+    -fx-border-color: #2a4060;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+}
+
+/* Columna — verde */
+.ast-nodo-columna {
+    -fx-background-color: #152215;
+    -fx-background-radius: 6;
+    -fx-border-color: #2a5030;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+}
+
+/* Literal — ámbar */
+.ast-nodo-literal {
+    -fx-background-color: #2d2010;
+    -fx-background-radius: 6;
+    -fx-border-color: #6b4a10;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+}
+
+/* Operador — morado */
+.ast-nodo-operador {
+    -fx-background-color: #221a35;
+    -fx-background-radius: 6;
+    -fx-border-color: #4a3070;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+}
+
+/* Agregación — cyan */
+.ast-nodo-agregacion {
+    -fx-background-color: #0d2a2a;
+    -fx-background-radius: 6;
+    -fx-border-color: #1a5a5a;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+}
+
+/* Nodo ausente (opcional no usado) — gris apagado */
+.ast-nodo-ausente {
+    -fx-background-color: #1a1c24;
+    -fx-background-radius: 6;
+    -fx-border-color: #2a2d3a;
+    -fx-border-width: 0.5;
+    -fx-border-radius: 6;
+    -fx-opacity: 0.5;
+}
+
+.ast-etiqueta {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #c8cfe8;
+}
+
+.ast-detalle {
+    -fx-font-family: "Monospaced", "Courier New", monospace;
+    -fx-font-size: 11px;
+    -fx-text-fill: #6a8090;
+}
+
+/* Tema claro */
+.theme-light .ast-conector      { -fx-text-fill: #b0b8d0; }
+.theme-light .ast-nodo-consulta { -fx-background-color: #ddeeff; -fx-border-color: #5580cc; }
+.theme-light .ast-nodo-clausula { -fx-background-color: #eef2ff; -fx-border-color: #a0b0e8; }
+.theme-light .ast-nodo-columna  { -fx-background-color: #eef8ee; -fx-border-color: #80c090; }
+.theme-light .ast-nodo-literal  { -fx-background-color: #fff8ee; -fx-border-color: #e0b870; }
+.theme-light .ast-nodo-operador { -fx-background-color: #f5eeff; -fx-border-color: #c0a0e8; }
+.theme-light .ast-nodo-agregacion { -fx-background-color: #e0f8f8; -fx-border-color: #40a0a0; }
+.theme-light .ast-nodo-ausente  { -fx-background-color: #f0f0f0; -fx-border-color: #d0d0d0; }
+.theme-light .ast-etiqueta      { -fx-text-fill: #1a1e2e; }
+.theme-light .ast-detalle       { -fx-text-fill: #8090a0; }
