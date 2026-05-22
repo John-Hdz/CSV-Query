@@ -24,6 +24,11 @@ public class Lexer {
         try (CSVReader reader = new CSVReader(new FileReader(rutaCsv))) {
             String[] encabezados = reader.readNext();
             if (encabezados != null) {
+                // Sanitizar encabezados: Excel/LibreOffice corrompe "=" a "='"
+                // cuando guarda CSVs. Eliminamos apóstrofos finales espurios.
+                for (int i = 0; i < encabezados.length; i++) {
+                    encabezados[i] = sanitizarEncabezado(encabezados[i]);
+                }
                 columnasAlfabeto.addAll(Arrays.asList(encabezados).subList(1, encabezados.length));
             }
 
@@ -44,6 +49,25 @@ public class Lexer {
         } catch (Exception e) {
             System.err.println("Error al cargar el CSV del autómata: " + e.getMessage());
         }
+    }
+
+    /**
+     * Elimina artefactos que Excel/LibreOffice inyectan al guardar CSVs.
+     * El caso más común: "=" se guarda como "='" porque la hoja lo interpreta
+     * como inicio de fórmula y escapa el contenido con un apóstrofo prefijo.
+     * Aquí lo revertimos quitando apóstrofos al inicio y al final del encabezado.
+     */
+    private String sanitizarEncabezado(String encabezado) {
+        if (encabezado == null) return "";
+        // Quitar apóstrofos espurios al inicio (='  →  =)
+        String s = encabezado.trim();
+        if (s.length() > 1 && s.endsWith("'")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        if (s.length() > 1 && s.startsWith("'")) {
+            s = s.substring(1);
+        }
+        return s;
     }
 
 
@@ -121,18 +145,24 @@ public class Lexer {
                     }
                     estadoActual = "q0";
 
-                    // Intentar reprocessar el carácter actual desde q0
-                    String colKey2 = obtenerColumna(c);
-                    Map<String, String> filaQ0 = matrizTransicion.get("q0");
-                    String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
-                    if (estadoDesdeQ0 != null) {
-                        if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
-                            procesarToken(String.valueOf(c), estadoDesdeQ0);
-                        } else if (esEstadoDeError(estadoDesdeQ0)) {
-                            registrarError(String.valueOf(c), estadoDesdeQ0);
-                        } else {
-                            lexemaActual.append(c);
-                            estadoActual = estadoDesdeQ0;
+                    // Operadores aritméticos simples (+, -, /) no están en la matriz
+                    // pero deben emitirse como tokens de un carácter.
+                    if (esOperadorAritmeticoSimple(c)) {
+                        procesarToken(String.valueOf(c), "q0");
+                    } else {
+                        // Intentar reprocessar el carácter actual desde q0
+                        String colKey2 = obtenerColumna(c);
+                        Map<String, String> filaQ0 = matrizTransicion.get("q0");
+                        String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
+                        if (estadoDesdeQ0 != null) {
+                            if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
+                                procesarToken(String.valueOf(c), estadoDesdeQ0);
+                            } else if (esEstadoDeError(estadoDesdeQ0)) {
+                                registrarError(String.valueOf(c), estadoDesdeQ0);
+                            } else {
+                                lexemaActual.append(c);
+                                estadoActual = estadoDesdeQ0;
+                            }
                         }
                     }
                 }
@@ -191,6 +221,12 @@ public class Lexer {
             case "<=": id = 1005; nombre = "TOKEN_MENOR_IGUAL"; break;
             case "!=": id = 1006; nombre = "TOKEN_DIFERENTE"; break;
 
+            // Operadores aritméticos (1100) — para expresiones entre paréntesis
+            case "+": id = 1101; nombre = "TOKEN_MAS";    break;
+            case "-": id = 1102; nombre = "TOKEN_MENOS";  break;
+            case "/": id = 1103; nombre = "TOKEN_SLASH";  break;
+            // TOKEN_ASTERISCO ya cubre el '*' como multiplicación además de "todas las columnas"
+
             // Símbolos Especiales (3000)
             case ",": id = 3001; nombre = "TOKEN_COMA"; break;
             case ";": id = 3002; nombre = "TOKEN_PUNTOCOMA"; break;
@@ -245,6 +281,14 @@ public class Lexer {
         if (Character.isDigit(c)) return String.valueOf(c);
         if (Character.isLetter(c)) return String.valueOf(Character.toLowerCase(c));
         return String.valueOf(c);
+    }
+
+    /**
+     * Verifica si el carácter es un operador aritmético que no está en la
+     * matriz de transición pero debe emitirse como token de un solo carácter.
+     */
+    private boolean esOperadorAritmeticoSimple(char c) {
+        return c == '+' || c == '-' || c == '/';
     }
 
 

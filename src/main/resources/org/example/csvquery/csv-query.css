@@ -26,7 +26,7 @@
     -color-editor-sel:  #00ff8833;
     -color-active-tab-bg: #0d0d0d;
     -color-id-row-bg:   #0d1a0d;
-    -font-mono: 'Consolas';
+    -font-mono: 'JetBrains Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@
     -color-editor-sel:  #0a7c4f33;
     -color-active-tab-bg: #f4f6f8;
     -color-id-row-bg:   #e8f8f0;
-    -font-mono: 'Consolas';
+    -font-mono: 'JetBrains Mono', Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -139,6 +139,40 @@
 /* ══════════════════════════════════════════════════════════
    EDITOR AREA
    ══════════════════════════════════════════════════════════ */
+/* Estilo base del editor */
+/* 1. El contenedor principal (fondo del editor) */
+.mi-editor-codigo {
+    -fx-background-color: -color-surface; /* Respeta tu tema oscuro/claro */
+    -fx-font-family: 'Consolas', 'Courier New', monospace; /* Fuente base */
+    -fx-font-size: 14px;
+}
+
+/* 2. Todos los nodos de texto DENTRO de RichTextFX */
+.mi-editor-codigo .text {
+    -fx-font-family: 'Consolas', 'Courier New', monospace;
+    -fx-font-size: 14px;
+}
+
+/* 3. Nuestro nuevo texto normal (variables, comas, puntos) */
+.default-text {
+    -fx-fill: -color-text; /* Usa -fx-fill en lugar de text-fill. Esto cambiará con tu tema */
+}
+
+/* 4. Las clases resaltadas que ya teníamos */
+.keyword {
+    -fx-fill: #2b62ae;
+    -fx-font-weight: bold;
+}
+
+.function {
+    -fx-fill: #7e52aa;
+    -fx-font-weight: bold;
+}
+
+.string {
+    -fx-fill: #369156;
+}
+
 .editor-tabbar {
     -fx-background-color: -color-surface;
     -fx-border-color: -color-border;
@@ -201,18 +235,18 @@
 }
 
 .editor-textarea {
-    -fx-background-color: transparent;
+    -fx-background-color: -color-surface;
     -fx-text-fill: -color-text;
     -fx-font-family: -font-mono;
     -fx-font-size: 13px;
     -fx-padding: 16 16 16 8;
-    -fx-control-inner-background: transparent;
+    -fx-control-inner-background: -color-surface;
     -fx-highlight-fill: -color-editor-sel;
     -fx-border-width: 0;
 }
 
 .editor-textarea .content {
-    -fx-background-color: transparent;
+    -fx-background-color: -color-surface;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -462,4 +496,93 @@
     -fx-font-family: -font-mono;
     -fx-font-size: 13px;
     -fx-font-weight: bold;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SPLIT PANE PRINCIPAL (editor arriba / resultados abajo)
+   ══════════════════════════════════════════════════════════ */
+
+/* Quita el fondo del SplitPane para que el editor y la tabla
+   mantengan sus propios estilos sin borde extra */
+.main-split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Oculta el "grip" visual del divisor pero lo deja arrastrable */
+.main-split-pane > .split-pane-divider {
+    -fx-background-color: -color-border;
+    -fx-padding: 0;
+    -fx-pref-height: 3px;
+}
+
+/* El panel superior del SplitPane (editor + statusbar)
+   no necesita fondo propio, lo hereda */
+.editor-split-top {
+    -fx-background-color: transparent;
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   PANEL CÓDIGO INTERMEDIO (🐍 Python generado)
+   ══════════════════════════════════════════════════════════ */
+
+.panel-codigo-root {
+    -fx-background-color: transparent;
+}
+
+.panel-codigo-header {
+    -fx-background-color: -color-row-alt;
+    -fx-padding: 8 14 8 14;
+    -fx-border-color: -color-border;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 38px;
+}
+
+.panel-codigo-title {
+    -fx-text-fill: -color-text;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.08em;
+}
+
+.panel-codigo-badge {
+    -fx-background-color: #3572A5;   /* azul Python */
+    -fx-text-fill: white;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 4;
+}
+
+.panel-codigo-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+
+.panel-codigo-scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+/* El TextArea imita un editor de código oscuro independientemente del tema */
+.area-codigo-python {
+    -fx-background-color: #1e1e2e;
+    -fx-text-fill: #cdd6f4;
+    -fx-font-family: "JetBrains Mono", "Fira Code", "Consolas", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-border-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-highlight-fill: #45475a;
+    -fx-highlight-text-fill: #cdd6f4;
+    -fx-padding: 14;
+}
+
+.area-codigo-python .content {
+    -fx-background-color: #1e1e2e;
+}
+
+.area-codigo-python:focused {
+    -fx-border-color: transparent;
 }

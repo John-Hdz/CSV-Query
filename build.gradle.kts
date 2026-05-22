@@ -43,6 +43,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
 
     implementation("com.opencsv:opencsv:5.9")
+    implementation("org.fxmisc.richtext:richtextfx:0.11.7")
 }
 
 tasks.withType<Test> {

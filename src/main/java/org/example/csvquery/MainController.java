@@ -15,11 +15,17 @@ import javafx.stage.Stage;
 import org.example.csvquery.models.Lexer;
 import org.example.csvquery.Parser;
 import org.example.csvquery.models.Token;
+import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 import java.io.*;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class MainController implements Initializable {
@@ -31,7 +37,9 @@ public class MainController implements Initializable {
     @FXML private Button btnTema;
 
     // ── Editor ───────────────────────────────────────────────
-    @FXML private TextArea editorSQL;
+//    @FXML private TextArea editorSQL;
+    @FXML private StackPane editorContainer;
+    private CodeArea editorSQL;
     @FXML private VBox     lineNumbers;
 
     // ── Status bar ───────────────────────────────────────────
@@ -46,6 +54,7 @@ public class MainController implements Initializable {
     @FXML private Button tabLexico;
     @FXML private Button tabTokens;
     @FXML private Button tabConsola;
+    @FXML private Button tabCodigo;
 
     // ── Results table ────────────────────────────────────────
     @FXML private TableView<ObservableList<String>> tablaResultados;
@@ -53,6 +62,10 @@ public class MainController implements Initializable {
     // ── Panel léxico (ScrollPane + VBox internos del FXML) ───
     @FXML private ScrollPane panelLexico;
     @FXML private VBox       vboxLexico;
+
+    // ── Panel código intermedio ───────────────────────────────
+    @FXML private VBox     panelCodigo;
+    @FXML private TextArea areaCodigo;
 
     // ── Dictionary panel ─────────────────────────────────────
     @FXML private Label lblFilas;
@@ -76,15 +89,69 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        editorSQL.setText(
+
+        editorSQL = new CodeArea();
+        editorSQL.getStyleClass().add("mi-editor-codigo");
+        editorSQL.setParagraphGraphicFactory(LineNumberFactory.get(editorSQL));
+
+        editorSQL.textProperty().addListener((obs, oldText, newText) -> {
+            editorSQL.setStyleSpans(0, computeHighlighting(newText));
+        });
+
+        editorContainer.getChildren().add(editorSQL);
+
+        editorSQL.replaceText(
                 "-- Escribe tu consulta aquí\n\n" +
-                        "TRAER nombre, edad DESDE \"datos.csv\" DONDE edad > 20;"
+                        "TRAER nombre, edad DESDE \"src/main/resources/CSV/datos.csv\" DONDE edad > 20;"
         );
-        sincronizarNumerosLinea();
+
         sincronizarCursor();
+
         setEstado("LISTO", "lbl-estado");
         log("INFO", "Aplicación iniciada.");
         log("INFO", "Autómata esperado en: " + RUTA_AUTOMATA);
+    }
+    //Resalto de letras
+
+    // 1. Definimos las palabras reservadas y funciones
+    private static final String[] KEYWORDS = new String[] {
+            "TRAER", "DESDE", "DONDE", "Y", "O", "ORDENAR", "POR", "ASC", "DESC", "LIMITAR", "DISTINTO", "GUARDAR", "EN"
+    };
+    private static final String[] FUNCTIONS = new String[] {
+            "CONTAR", "SUMA", "PROMEDIO", "MAXIMO", "MINIMO"
+    };
+
+    // 2. Creamos la expresión regular (Regex) para detectarlas
+    private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", KEYWORDS) + ")\\b";
+    private static final String FUNCTION_PATTERN = "\\b(" + String.join("|", FUNCTIONS) + ")\\b";
+    private static final String STRING_PATTERN = "\"([^\"]*)\""; // Para detectar textos entre comillas
+
+    private static final Pattern PATTERN = Pattern.compile(
+            "(?<KEYWORD>" + KEYWORD_PATTERN + ")"
+                    + "|(?<FUNCTION>" + FUNCTION_PATTERN + ")"
+                    + "|(?<STRING>" + STRING_PATTERN + ")"
+    );
+    //El motor que asigna las clases CSS según lo que encuentre
+    private StyleSpans<Collection<String>> computeHighlighting(String text) {
+        Matcher matcher = PATTERN.matcher(text);
+        int lastKwEnd = 0;
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+
+        while(matcher.find()) {
+            String styleClass =
+                    matcher.group("KEYWORD") != null ? "keyword" :
+                            matcher.group("FUNCTION") != null ? "function" :
+                                    matcher.group("STRING") != null ? "string" :
+                                            "default-text"; // <-- CAMBIO AQUÍ: Clase por defecto en lugar de null
+
+            // CAMBIO AQUÍ: Usamos "default-text" en lugar de emptyList()
+            spansBuilder.add(Collections.singleton("default-text"), matcher.start() - lastKwEnd);
+            spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
+            lastKwEnd = matcher.end();
+        }
+        // CAMBIO AQUÍ: Usamos "default-text" para el texto final
+        spansBuilder.add(Collections.singleton("default-text"), text.length() - lastKwEnd);
+        return spansBuilder.create();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -124,7 +191,7 @@ public class MainController implements Initializable {
             log("INFO", "Archivo seleccionado: " + file.getAbsolutePath());
             cargarEncabezados(file);
             String ruta = file.getAbsolutePath().replace("\\", "/");
-            editorSQL.setText(
+            editorSQL.replaceText(
                     "-- Ejecutando consulta local\n\n" +
                             "TRAER * DESDE \"" + ruta + "\";"
             );
@@ -285,32 +352,42 @@ public class MainController implements Initializable {
 
     @FXML public void onTabResultado() {
         mostrarPanel(tablaResultados);
-        activarTab(tabResultado, tabLexico, tabTokens, tabConsola);
+        activarTab(tabResultado, tabLexico, tabTokens, tabConsola, tabCodigo);
     }
 
     @FXML public void onTabLexico() {
         mostrarPanel(panelLexico);
-        activarTab(tabLexico, tabResultado, tabTokens, tabConsola);
+        activarTab(tabLexico, tabResultado, tabTokens, tabConsola, tabCodigo);
         construirPanelSintactico(ultimoAST, ultimosTokens, ultimosErrores);
     }
 
     @FXML public void onTabTokens() {
         mostrarPanel(tablaResultados);
-        activarTab(tabTokens, tabLexico, tabResultado, tabConsola);
+        activarTab(tabTokens, tabLexico, tabResultado, tabConsola, tabCodigo);
         mostrarTokensEnTabla(ultimosTokens);
     }
 
     @FXML public void onTabConsola() {
         mostrarPanel(tablaResultados);
-        activarTab(tabConsola, tabLexico, tabResultado, tabTokens);
+        activarTab(tabConsola, tabLexico, tabResultado, tabTokens, tabCodigo);
         mostrarConsolaEnTabla();
     }
 
-    /** Alterna visibilidad entre tablaResultados y panelLexico en el StackPane */
+    @FXML public void onTabCodigo() {
+        mostrarPanel(panelCodigo);
+        activarTab(tabCodigo, tabLexico, tabResultado, tabTokens, tabConsola);
+        if (ultimoScriptPy == null || ultimoScriptPy.isBlank()) {
+            areaCodigo.setText("-- Ejecuta una consulta para ver el código Python generado.");
+        } else {
+            areaCodigo.setText(ultimoScriptPy);
+        }
+    }
+
+    /** Alterna visibilidad entre los paneles del StackPane */
     private void mostrarPanel(javafx.scene.Node panelVisible) {
         tablaResultados.setVisible(panelVisible == tablaResultados);
-        if (panelLexico != null)
-            panelLexico.setVisible(panelVisible == panelLexico);
+        if (panelLexico  != null) panelLexico .setVisible(panelVisible == panelLexico);
+        if (panelCodigo  != null) panelCodigo .setVisible(panelVisible == panelCodigo);
     }
 
     private void activarTab(Button activo, Button... inactivos) {
@@ -841,14 +918,6 @@ public class MainController implements Initializable {
     //  LÍNEAS Y CURSOR
     // ══════════════════════════════════════════════════════════
 
-    private void sincronizarNumerosLinea() {
-        if (lineNumbers == null) return;
-        editorSQL.textProperty().addListener((obs, o, n) -> {
-            long count = n.chars().filter(c -> c == '\n').count() + 1;
-            actualizarNumerosLinea((int) count);
-        });
-    }
-
     private void actualizarNumerosLinea(int count) {
         if (lineNumbers == null) return;
         lineNumbers.getChildren().clear();
@@ -860,12 +929,11 @@ public class MainController implements Initializable {
     }
 
     private void sincronizarCursor() {
-        editorSQL.caretPositionProperty().addListener((obs, o, n) -> {
-            String texto = editorSQL.getText();
-            int caret = n.intValue(), linea = 1, col = 1;
-            for (int i = 0; i < Math.min(caret, texto.length()); i++) {
-                if (texto.charAt(i) == '\n') { linea++; col = 1; } else col++;
-            }
+        editorSQL.caretPositionProperty().addListener((obs, oldPos, newPos) -> {
+            // En RichTextFX, los párrafos (líneas) y columnas empiezan en 0, por eso sumamos 1
+            int linea = editorSQL.getCurrentParagraph() + 1;
+            int col = editorSQL.getCaretColumn() + 1;
+
             lblCursor.setText("LÍNEA " + linea + ", COL " + col);
         });
     }

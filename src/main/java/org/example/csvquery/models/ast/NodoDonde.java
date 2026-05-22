@@ -20,7 +20,9 @@ public class NodoDonde implements NodoAST {
         return new NodoInfo(nodo.getClass().getSimpleName(), "", NodoInfo.Categoria.OPERADOR);
     }
 
-        @Override
+    public NodoAST getExpresion() { return expresionLogica; }
+
+    @Override
     public TipoDato validarSemantica() throws Exception {
         // Regla de Oro: Lo que esté en el DONDE debe resultar en un Booleano
         TipoDato tipoResultado = expresionLogica.validarSemantica();
@@ -35,6 +37,14 @@ public class NodoDonde implements NodoAST {
     @Override
     public String generarPython() {
         // En Pandas, el filtrado se hace como: df = df[ (expresion) ]
-        return "df = df[" + expresionLogica.generarPython() + "]\n";
+        return "df = df[" + generarCondicionPython("df") + "]\n";
+    }
+
+    /**
+     * Genera solo la expresión de condición usando el dataframe indicado.
+     * Útil para subconsultas que tienen su propio dataframe auxiliar (_subN_df).
+     */
+    public String generarCondicionPython(String nombreDf) {
+        return expresionLogica.generarPythonConDf(nombreDf);
     }
 }

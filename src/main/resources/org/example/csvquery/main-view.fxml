@@ -55,69 +55,99 @@
                     </HBox>
                 </HBox>
 
-                <!-- ── SQL Editor ── -->
-                <HBox VBox.vgrow="ALWAYS" styleClass="editor-container">
+                <!-- ══════════════════════════════════════════════════════
+                     SplitPane vertical: divide el espacio entre el editor
+                     (arriba) y los resultados (abajo) de forma fija.
+                     dividerPositions="0.35" = editor ocupa 35% del alto,
+                     resultados el 65% restante. El usuario puede arrastrar.
+                ═══════════════════════════════════════════════════════ -->
+                <SplitPane orientation="VERTICAL"
+                           dividerPositions="0.35"
+                           VBox.vgrow="ALWAYS"
+                           styleClass="main-split-pane">
 
-                    <!-- Line numbers -->
-                    <VBox fx:id="lineNumbers" alignment="TOP_RIGHT" styleClass="line-numbers">
-                        <Label text="1" styleClass="line-number"/>
-                        <Label text="2" styleClass="line-number"/>
-                        <Label text="3" styleClass="line-number"/>
+                    <!-- ── Panel superior: editor + statusbar ── -->
+                    <VBox minHeight="80" styleClass="editor-split-top">
+
+                        <!-- SQL Editor (CodeArea se inyecta aquí desde el controller) -->
+                        <StackPane fx:id="editorContainer" VBox.vgrow="ALWAYS"/>
+
+                        <!-- Status Bar -->
+                        <HBox alignment="CENTER_LEFT" spacing="16" styleClass="statusbar">
+                            <Label text="ARCHIVO:"  styleClass="statusbar-label"/>
+                            <Label fx:id="lblArchivo"  text="DATOS.CSV"     styleClass="statusbar-value"/>
+                            <Label text="COLUMNAS:" styleClass="statusbar-label"/>
+                            <Label fx:id="lblColumnas" text="8"             styleClass="statusbar-value"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="lblEncoding" text="UTF-8"         styleClass="statusbar-meta"/>
+                            <Label fx:id="lblCursor"   text="LÍNEA 1, COL 1" styleClass="statusbar-meta"/>
+                        </HBox>
                     </VBox>
 
-                    <TextArea fx:id="editorSQL" HBox.hgrow="ALWAYS" wrapText="false" styleClass="editor-textarea"/>
-                </HBox>
+                    <!-- ── Panel inferior: tabs + tabla/panel léxico ── -->
+                    <VBox minHeight="80">
 
-                <!-- ── Status Bar ── -->
-                <HBox alignment="CENTER_LEFT" spacing="16" styleClass="statusbar">
-                    <Label text="ARCHIVO:"  styleClass="statusbar-label"/>
-                    <Label fx:id="lblArchivo"  text="DATOS.CSV"     styleClass="statusbar-value"/>
-                    <Label text="COLUMNAS:" styleClass="statusbar-label"/>
-                    <Label fx:id="lblColumnas" text="8"             styleClass="statusbar-value"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="lblEncoding" text="UTF-8"         styleClass="statusbar-meta"/>
-                    <Label fx:id="lblCursor"   text="LÍNEA 1, COL 1" styleClass="statusbar-meta"/>
-                </HBox>
+                        <!-- Results Tabs -->
+                        <HBox alignment="CENTER_LEFT" styleClass="results-tabbar">
+                            <Button fx:id="tabResultado"  text="🟩  RESULTADO DE CONSULTA"  onAction="#onTabResultado"  styleClass="btn-tab-active"/>
+                            <Button fx:id="tabLexico"     text="🌿  ANÁLISIS SINTÁCTICO"     onAction="#onTabLexico"     styleClass="btn-tab"/>
+                            <Button fx:id="tabTokens"     text="🔷  TOKENS"                 onAction="#onTabTokens"     styleClass="btn-tab"/>
+                            <Button fx:id="tabConsola"    text="🖥  CONSOLA DE COMPILACIÓN" onAction="#onTabConsola"    styleClass="btn-tab"/>
+                            <Button fx:id="tabCodigo"     text="🐍  CÓDIGO INTERMEDIO"      onAction="#onTabCodigo"     styleClass="btn-tab"/>
+                        </HBox>
 
-                <!-- ── Results Tabs ── -->
-                <HBox alignment="CENTER_LEFT" styleClass="results-tabbar">
-                    <Button fx:id="tabResultado" text="🟩  RESULTADO DE CONSULTA"    onAction="#onTabResultado" styleClass="btn-tab-active"/>
-                    <Button fx:id="tabLexico"    text="🌿  ANÁLISIS SINTÁCTICO"           onAction="#onTabLexico"    styleClass="btn-tab"/>
-                    <Button fx:id="tabTokens"    text="🔷  TOKENS"                   onAction="#onTabTokens"    styleClass="btn-tab"/>
-                    <Button fx:id="tabConsola"   text="🖥  CONSOLA DE COMPILACIÓN"   onAction="#onTabConsola"   styleClass="btn-tab"/>
-                </HBox>
+                        <!-- StackPane: apila tablaResultados y panelLexico -->
+                        <StackPane VBox.vgrow="ALWAYS">
 
-                <!-- ══════════════════════════════════════════════════════
-                     StackPane: apila tablaResultados y panelLexico.
-                     Solo uno tiene visible="true" a la vez.
-                     VBox.vgrow="ALWAYS" hace que ocupe todo el espacio
-                     restante igual que antes lo hacía la tabla sola.
-                ═══════════════════════════════════════════════════════ -->
-                <StackPane VBox.vgrow="ALWAYS">
+                            <TableView fx:id="tablaResultados"
+                                       styleClass="results-table"
+                                       visible="true">
+                                <placeholder>
+                                    <Label text="Ejecuta una consulta para ver los resultados"
+                                           styleClass="table-placeholder"/>
+                                </placeholder>
+                            </TableView>
 
-                    <!-- Tabla de resultados / tokens / consola -->
-                    <TableView fx:id="tablaResultados"
-                               styleClass="results-table"
-                               visible="true">
-                        <placeholder>
-                            <Label text="Ejecuta una consulta para ver los resultados"
-                                   styleClass="table-placeholder"/>
-                        </placeholder>
-                    </TableView>
+                            <ScrollPane fx:id="panelLexico"
+                                        fitToWidth="true"
+                                        visible="false"
+                                        styleClass="panel-lexico-scroll">
+                                <content>
+                                    <VBox fx:id="vboxLexico"
+                                          spacing="10"
+                                          style="-fx-padding: 14 14 14 14;"/>
+                                </content>
+                            </ScrollPane>
 
-                    <!-- Panel de análisis léxico por cláusula -->
-                    <ScrollPane fx:id="panelLexico"
-                                fitToWidth="true"
-                                visible="false"
-                                styleClass="panel-lexico-scroll">
-                        <content>
-                            <VBox fx:id="vboxLexico"
-                                  spacing="10"
-                                  style="-fx-padding: 14 14 14 14;"/>
-                        </content>
-                    </ScrollPane>
+                            <!-- Panel de Código Intermedio (Python generado) -->
+                            <VBox fx:id="panelCodigo" visible="false" styleClass="panel-codigo-root">
 
-                </StackPane>
+                                <!-- Header del panel -->
+                                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="panel-codigo-header">
+                                    <Label text="🐍" style="-fx-font-size: 14px;"/>
+                                    <Label text="CÓDIGO INTERMEDIO GENERADO" styleClass="panel-codigo-title"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Label text="Python / Pandas" styleClass="panel-codigo-badge"/>
+                                </HBox>
+
+                                <!-- Área de código con scroll -->
+                                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
+                                            styleClass="panel-codigo-scroll">
+                                    <content>
+                                        <TextArea fx:id="areaCodigo"
+                                                  editable="false"
+                                                  wrapText="false"
+                                                  styleClass="area-codigo-python"
+                                                  promptText="El código Python generado aparecerá aquí después de ejecutar una consulta."/>
+                                    </content>
+                                </ScrollPane>
+
+                            </VBox>
+
+                        </StackPane>
+                    </VBox>
+
+                </SplitPane>
 
             </VBox>
 

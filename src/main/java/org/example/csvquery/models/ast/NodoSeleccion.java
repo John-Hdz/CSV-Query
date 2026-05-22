@@ -28,8 +28,8 @@ public class NodoSeleccion implements NodoAST {
 
     public NodoInfo toInfo() {
         String det = todo ? "todas las columnas (*)"
-                   : (agregacion != null ? "función de agregación"
-                   : String.join(", ", columnas));
+                : (agregacion != null ? "función de agregación"
+                : String.join(", ", columnas));
         NodoInfo n = new NodoInfo("NodoSeleccion",
                 (distinto ? "DISTINTO  " : "") + det,
                 NodoInfo.Categoria.CLAUSULA);
@@ -54,8 +54,8 @@ public class NodoSeleccion implements NodoAST {
             for (String col : columnas) {
                 if (!TablaSimbolosCSV.existeColumna(col)) {
                     throw new Exception(
-                        "Error Semántico: La columna '" + col +
-                        "' no existe en el archivo CSV.");
+                            "Error Semántico: La columna '" + col +
+                                    "' no existe en el archivo CSV.");
                 }
             }
         }
@@ -67,7 +67,7 @@ public class NodoSeleccion implements NodoAST {
         // Caso 1: función de agregación — resultado es un escalar
         if (agregacion != null) {
             return "resultado = " + agregacion.generarPython() + "\n" +
-                   "print(resultado)\n";
+                    "print(resultado)\n";
         }
 
         StringBuilder sb = new StringBuilder();
@@ -90,4 +90,24 @@ public class NodoSeleccion implements NodoAST {
     }
 
     public boolean tieneAgregacion() { return agregacion != null; }
+
+    /**
+     * Devuelve el nombre de la primera columna seleccionada.
+     * Usado por NodoSubconsulta para saber qué columna extraer (.iloc[0]).
+     */
+    public String getPrimeraColumna() {
+        if (!columnas.isEmpty()) return columnas.get(0);
+        throw new IllegalStateException("La subconsulta debe seleccionar una columna explícita (no * ni agregación).");
+    }
+
+    /**
+     * Devuelve el TipoDato de la primera columna seleccionada.
+     * Válido solo después de validarSemantica().
+     */
+    public TipoDato getTipoResultado() {
+        if (!columnas.isEmpty()) {
+            return TablaSimbolosCSV.obtenerTipoColumna(columnas.get(0));
+        }
+        return TipoDato.ERROR;
+    }
 }

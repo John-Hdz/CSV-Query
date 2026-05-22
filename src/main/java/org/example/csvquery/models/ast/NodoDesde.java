@@ -13,7 +13,7 @@ public class NodoDesde implements NodoAST {
         return new NodoInfo("NodoDesde", rutaArchivo, NodoInfo.Categoria.CLAUSULA);
     }
 
-        @Override
+    @Override
     public TipoDato validarSemantica() throws Exception {
         // El NodoDesde es el responsable de llenar la tabla de símbolos
         // quitando las comillas del nombre del archivo si las tiene
@@ -27,7 +27,17 @@ public class NodoDesde implements NodoAST {
 
     @Override
     public String generarPython() {
-        // Traducimos a Pandas
-        return "df = pd.read_csv(" + rutaArchivo + ")\n";
+        // Usamos r"..." para soportar rutas con barras invertidas (Windows)
+        String rutaLimpia = rutaArchivo.replace("\"", "").replace("'", "");
+        return "df = pd.read_csv(r\"" + rutaLimpia + "\")\n";
+    }
+
+    /**
+     * Genera solo la expresión pd.read_csv(...) sin asignarla a "df".
+     * Útil para subconsultas que usan su propio dataframe auxiliar.
+     */
+    public String generarReadCsv() {
+        String rutaLimpia = rutaArchivo.replace("\"", "").replace("'", "");
+        return "pd.read_csv(r\"" + rutaLimpia + "\")";
     }
 }
