@@ -87,6 +87,6 @@ public class PandasRunner {
             } catch (Exception ignored) {}
         }
         // Fallback: en Windows suele estar en este path por defecto
-        return "python";
+        return "py";
     }
 }

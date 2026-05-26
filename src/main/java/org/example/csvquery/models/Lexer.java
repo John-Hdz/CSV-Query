@@ -179,6 +179,10 @@ public class Lexer {
             case "TODO":     id = 2018; nombre = "TOKEN_TODO"; break;
             case "GUARDAR":  id = 2019; nombre = "TOKEN_GUARDAR"; break;
             case "EN":       id = 2020; nombre = "TOKEN_EN"; break;
+            case "INSERTAR": id = 2021; nombre = "TOKEN_INSERTAR"; break;
+            case "VALORES":  id = 2022; nombre = "TOKEN_VALORES"; break;
+            case "ACTUALIZAR": id = 2023; nombre = "TOKEN_ACTUALIZAR"; break;
+            case "ELIMINAR": id = 2024; nombre = "TOKEN_ELIMINAR"; break;
 
             // Operadores (1000)
             case "=":  id = 1001; nombre = "TOKEN_IGUAL"; break;

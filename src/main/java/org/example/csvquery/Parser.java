@@ -19,7 +19,20 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    public NodoConsulta parsear() throws ParseException {
+    public NodoAST parsear() throws ParseException {
+
+        if (esTipo("TOKEN_INSERTAR")) {
+            return parsearInsert();
+        }
+
+
+        if (esTipo("TOKEN_ACTUALIZAR")) {
+            return parsearActualizar();
+        }
+
+        if (esTipo("TOKEN_ELIMINAR")) {
+            return parsearEliminar();
+        }
 
         // ── TRAER ──────────────────────────────────────────────────────────────
         consumir("TOKEN_TRAER");
@@ -117,7 +130,6 @@ public class Parser {
     }
 
     //  AGREGACIÓN
-
     private NodoAgregacion parsearAgregacion() throws ParseException {
         String funcion = tipo(); avanzar();
         consumir("TOKEN_PARENTESIS_ABRE");
@@ -177,52 +189,79 @@ public class Parser {
     //  COMPARACIÓN
 
     private NodoAST parsearComparacion() throws ParseException {
+
         NodoAST izq = parsearExpresion();
 
-        String opToken  = tipo();
+        String opToken = tipo();
+
         String opPython = traducirOperador(opToken);
+
         avanzar();
 
-        NodoAST der = parsearExpresion();
+        NodoAST der;
+        if (esTipo("TOKEN_ID")&&
+                !valorActual().matches("-?\\d+(\\.\\d+)?")) {
 
-        return new NodoOperacionBinaria(izq, opPython, der);
+            String valor = valorActual();
+
+            avanzar();
+
+            der = new NodoLiteral(
+                    valor,
+                    TipoDato.CADENA
+            );
+        }
+        else {
+
+            der = parsearExpresion();
+        }
+
+        return new NodoOperacionBinaria(
+                izq,
+                opPython,
+                der
+        );
     }
 
     private NodoAST parsearExpresion() throws ParseException {
 
-        // ── Paréntesis: subconsulta  O  agrupación aritmética ─────────────────
         if (esTipo("TOKEN_PARENTESIS_ABRE")) {
-            avanzar(); // consume '('
 
-            // ¿Empieza con TRAER? → subconsulta escalar
+            avanzar();
             if (esTipo("TOKEN_TRAER")) {
                 NodoConsulta sub = parsearConsultaInterna();
                 consumir("TOKEN_PARENTESIS_CIERRA");
-                NodoSubconsulta.resetContador(); // solo reseteamos en la raíz si es necesario
+                NodoSubconsulta.resetContador();
                 return new NodoSubconsulta(sub);
             }
-
-            // De lo contrario: expresión aritmética entre paréntesis
-            //  (salario * 0.2)  →  NodoExpresionAritmetica
             NodoAST inner = parsearExpresionAritmetica();
             consumir("TOKEN_PARENTESIS_CIERRA");
             return inner;
         }
-
-        if (esTipo("TOKEN_ENTERO") || esTipo("TOKEN_FLOAT")) {
+        if (
+                esTipo("TOKEN_ENTERO") ||
+                        esTipo("TOKEN_FLOAT")
+        ) {
             return parsearLiteral();
         }
-        if (esTipo("TOKEN_STRING")) {
+        if (
+                esTipo("TOKEN_STRING")
+        ) {
             return parsearLiteral();
         }
-
         String col = consumirNombreColumna();
         NodoAST nodo = new NodoColumna(col);
-
         if (hayMas() && esOperadorAritmetico(tipo())) {
-            String op = tipo(); avanzar();
+            String op = tipo();
+            avanzar();
+
             NodoAST der = parsearFactorAritmetico();
-            nodo = new NodoExpresionAritmetica(nodo, op, der);
+
+            nodo = new NodoExpresionAritmetica(
+                    nodo,
+                    op,
+                    der
+            );
         }
 
         return nodo;
@@ -275,6 +314,118 @@ public class Parser {
         // Una subconsulta no tiene ORDENAR, LIMITAR ni GUARDAR
         return new NodoConsulta(seleccion, desde, donde, null, null, null);
     }
+
+    //INSERT
+    private NodoInsertar parsearInsert() throws ParseException {
+        consumir("TOKEN_INSERTAR");
+        consumir("TOKEN_EN");
+        String archivo = valorActual();
+        consumir("TOKEN_STRING");
+        consumir("TOKEN_PARENTESIS_ABRE");
+        List<String> columnas = new ArrayList<>();
+        while (!esTipo("TOKEN_PARENTESIS_CIERRA")) {
+            columnas.add(valorActual());
+            consumirNombreColumna();
+            if (esTipo("TOKEN_COMA")) {
+                avanzar();
+            }
+        }
+        consumir("TOKEN_PARENTESIS_CIERRA");
+        consumir("TOKEN_VALORES");
+        consumir("TOKEN_PARENTESIS_ABRE");
+        List<String> valores = new ArrayList<>();
+        while (!esTipo("TOKEN_PARENTESIS_CIERRA")) {
+            valores.add(valorActual().replace("\"",""));
+            avanzar();
+            if (esTipo("TOKEN_COMA")) {
+                avanzar();
+            }
+        }
+
+        consumir("TOKEN_PARENTESIS_CIERRA");
+        if (hayMas() && esTipo("TOKEN_PUNTOCOMA")) {
+            avanzar();
+        }
+
+        return new NodoInsertar(
+                archivo,
+                columnas,
+                valores
+        );
+    }
+
+    // ACTUALIZAR
+    private NodoActualizar parsearActualizar() throws ParseException {
+        consumir("TOKEN_ACTUALIZAR");
+        String archivo = valorActual();
+        consumir("TOKEN_STRING");
+        consumir("TOKEN_VALORES");
+        List<String> columnas = new ArrayList<>();
+        List<String> valores = new ArrayList<>();
+        while (!esTipo("TOKEN_DONDE")) {
+
+            String columna = valorActual();
+            consumirNombreColumna();
+
+            consumir("TOKEN_IGUAL");
+
+            String valor = valorActual();
+            avanzar();
+
+            columnas.add(columna);
+            valores.add(valor);
+
+            if (esTipo("TOKEN_COMA")) {
+                avanzar();
+            }
+        }
+
+        consumir("TOKEN_DONDE");
+
+        NodoAST condicion = parsearCondicion();
+
+        if (hayMas() && esTipo("TOKEN_PUNTOCOMA")) {
+            avanzar();
+        }
+
+        return new NodoActualizar(
+                archivo,
+                columnas,
+                valores,
+                condicion
+        );
+    }
+
+
+    //ELIMINAR
+    private NodoEliminar parsearEliminar()
+            throws ParseException {
+
+        consumir("TOKEN_ELIMINAR");
+
+        String archivo = valorActual();
+
+        consumir("TOKEN_STRING");
+
+        consumir("TOKEN_DONDE");
+
+        NodoAST condicion =
+                parsearCondicion();
+
+        if (
+                hayMas() &&
+                        esTipo("TOKEN_PUNTOCOMA")
+        ) {
+            avanzar();
+        }
+
+        return new NodoEliminar(
+                archivo,
+                condicion
+        );
+    }
+
+
 
     //  LITERAL
 

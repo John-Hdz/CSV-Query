@@ -22,4 +22,7 @@ public interface NodoAST
     default String generarPythonConDf(String nombreDf) {
         return generarPython();
     }
+
+
+    public abstract NodoInfo toInfo();
 }
