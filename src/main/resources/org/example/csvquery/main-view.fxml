@@ -4,6 +4,8 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
             fx:id="rootPane"
@@ -119,7 +121,22 @@
                                 </content>
                             </ScrollPane>
 
-                            <!-- Panel de Código Intermedio (Python generado) -->
+                            <!-- Panel Consola de Compilación -->
+                            <VBox fx:id="panelConsola" visible="false" styleClass="consola-root">
+                                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="consola-header">
+                                    <Label text="⬤" style="-fx-text-fill:#ff5f57; -fx-font-size:10px;"/>
+                                    <Label text="⬤" style="-fx-text-fill:#febc2e; -fx-font-size:10px;"/>
+                                    <Label text="⬤" style="-fx-text-fill:#28c840; -fx-font-size:10px;"/>
+                                    <Region style="-fx-min-width:8;"/>
+                                    <Label text="CONSOLA DE COMPILACIÓN" styleClass="consola-header-title"/>
+                                </HBox>
+                                <ScrollPane fx:id="consolaScroll" fitToWidth="true"
+                                            VBox.vgrow="ALWAYS" styleClass="consola-scroll">
+                                    <content>
+                                        <VBox fx:id="vboxConsola" styleClass="consola-body" spacing="0"/>
+                                    </content>
+                                </ScrollPane>
+                            </VBox>
                             <VBox fx:id="panelCodigo" visible="false" styleClass="panel-codigo-root">
 
                                 <!-- Header del panel -->
@@ -156,38 +173,47 @@
 
                 <!-- Header -->
                 <HBox alignment="CENTER_LEFT" spacing="10" styleClass="dict-header">
-                    <Label text="📦" styleClass="dict-icon"/>
+<!--                    <Label text="📦" styleClass="dict-icon"/>-->
+                    <ImageView fitHeight="50.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@logotec.png" />
+                        </image>
+                    </ImageView>
                     <VBox spacing="2">
-                        <Label text="DICCIONARIO_DE_DATOS" styleClass="dict-title"/>
-                        <Label text="v10.4-estable"        styleClass="dict-version"/>
+                        <Label text="TECNOLÓGICO&#10;NACINAL DE MÉXICO&#10;EN CELAYA" styleClass="dict-title"/>
+<!--                        <Label text="v10.4-estable"        styleClass="dict-version"/>-->
                     </VBox>
                 </HBox>
 
-                <Label text="COLUMNAS DETECTADAS" styleClass="dict-section-title"/>
+                <Label text="LENGUAJES Y AUTÓMATAS ||" styleClass="dict-title"/>
 
                 <!-- Columna ID (activa) -->
-                <HBox alignment="CENTER_LEFT" styleClass="dict-col-row-active">
-                    <Label text="ID"    HBox.hgrow="ALWAYS" styleClass="dict-col-name-active"/>
-                    <Label text="(int)"                     styleClass="dict-col-type-active"/>
-                </HBox>
+                <VBox alignment="CENTER" spacing="10">
+                    <ImageView fitHeight="80.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@diego.jpg" />
+                        </image>
+                    </ImageView>
+                    <Label text="DIEGO RAMIREZ VÁZQUEZ" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
+                </VBox>
 
-                <!-- Columna NOMBRE -->
-                <HBox alignment="CENTER_LEFT" styleClass="dict-col-row">
-                    <Label text="NOMBRE" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
-                    <Label text="(string)"                   styleClass="dict-col-type"/>
-                </HBox>
+                <VBox alignment="CENTER" spacing="10">
+                    <ImageView fitHeight="80.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@ioni.jpg" />
+                        </image>
+                    </ImageView>
+                    <Label text="JUAN JOSÉ HERNÁNDEZ PÉREZ" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
+                </VBox>
 
-                <!-- Columna EDAD -->
-                <HBox alignment="CENTER_LEFT" styleClass="dict-col-row">
-                    <Label text="EDAD" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
-                    <Label text="(int)"                    styleClass="dict-col-type"/>
-                </HBox>
-
-                <!-- Columna EMAIL -->
-                <HBox alignment="CENTER_LEFT" styleClass="dict-col-row">
-                    <Label text="EMAIL" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
-                    <Label text="(string)"                  styleClass="dict-col-type"/>
-                </HBox>
+                <VBox alignment="CENTER" spacing="10">
+                    <ImageView fitHeight="80.0" pickOnBounds="true" preserveRatio="true">
+                        <image>
+                            <Image url="@vladi.jpg" />
+                        </image>
+                    </ImageView>
+                    <Label text="ALÍ VLADÍMIR CAÑADA GARCÍA" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
+                </VBox>
 
                 <Region VBox.vgrow="ALWAYS"/>
 

@@ -586,3 +586,131 @@
 .area-codigo-python:focused {
     -fx-border-color: transparent;
 }
+/* ══════════════════════════════════════════════════════════
+   CONSOLA DE COMPILACIÓN
+   ══════════════════════════════════════════════════════════ */
+
+.consola-root {
+    -fx-background-color: #0d0f14;
+}
+
+.consola-header {
+    -fx-background-color: #161821;
+    -fx-padding: 7 14 7 14;
+    -fx-border-color: #252733;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 34px;
+}
+
+.consola-header-title {
+    -fx-text-fill: #6e7391;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+    -fx-letter-spacing: 0.1em;
+}
+
+.consola-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+}
+.consola-scroll .viewport { -fx-background-color: transparent; }
+
+.consola-body {
+    -fx-background-color: #0d0f14;
+    -fx-padding: 10 14 10 14;
+}
+
+/* Separador entre fases */
+.consola-sep {
+    -fx-background-color: #1e2030;
+}
+
+/* Fila: $ comando sistema */
+.consola-fila-sistema {
+    -fx-padding: 3 0 3 0;
+    -fx-alignment: CENTER_LEFT;
+}
+.consola-prompt {
+    -fx-text-fill: #7070a0;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-min-width: 16px;
+}
+.consola-sistema {
+    -fx-text-fill: #a0a8cc;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+/* Fila: ✓ éxito */
+.consola-fila-ok {
+    -fx-padding: 3 0 3 0;
+    -fx-alignment: CENTER_LEFT;
+}
+.consola-ico-ok {
+    -fx-text-fill: #a6e3a1;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-min-width: 16px;
+}
+.consola-ok {
+    -fx-text-fill: #a6e3a1;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+/* Fila: · info */
+.consola-fila-info {
+    -fx-padding: 2 0 2 0;
+    -fx-alignment: CENTER_LEFT;
+}
+.consola-ico-info {
+    -fx-text-fill: #6e7391;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-min-width: 16px;
+}
+.consola-info {
+    -fx-text-fill: #6e7391;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+}
+
+/* Bloque de error */
+.consola-bloque-error {
+    -fx-background-color: #1e0f14;
+    -fx-border-color: #ff4f6a55;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-radius: 0;
+    -fx-background-radius: 2;
+}
+.consola-ico-error {
+    -fx-text-fill: #ff5f7a;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-min-width: 16px;
+}
+.consola-badge-error {
+    -fx-background-color: #ff3050;
+    -fx-text-fill: #ffffff;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 2 7 2 7;
+    -fx-background-radius: 3;
+}
+.consola-serie {
+    -fx-text-fill: #ff9ab0;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-letter-spacing: 0.08em;
+}
+.consola-error-msg {
+    -fx-text-fill: #ffb3c0;
+    -fx-font-family: -font-mono;
+    -fx-font-size: 12px;
+    -fx-padding: 2 0 0 24;
+}
