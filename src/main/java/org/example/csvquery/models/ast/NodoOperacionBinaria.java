@@ -11,6 +11,9 @@ public class NodoOperacionBinaria implements NodoAST {
         this.der = der;
     }
 
+    public NodoAST getIzq() { return izq; }
+    public NodoAST getDer() { return der; }
+
     public NodoInfo toInfo() {
         NodoInfo n = new NodoInfo("NodoOperacionBinaria", operador, NodoInfo.Categoria.OPERADOR);
         n.hijo(infoDeHijo(izq));
@@ -25,17 +28,31 @@ public class NodoOperacionBinaria implements NodoAST {
         return new NodoInfo(nodo.getClass().getSimpleName(), "", NodoInfo.Categoria.OPERADOR);
     }
 
-        @Override
+    @Override
     public TipoDato validarSemantica() throws Exception {
         TipoDato tIzq = izq.validarSemantica();
         TipoDato tDer = der.validarSemantica();
 
-        // Regla semántica para comparaciones (>, <, ==)
-        if (operador.equals(">") || operador.equals("<") || operador.equals("==")) {
-            if (tIzq == tDer || (esNumerico(tIzq) && esNumerico(tDer))) {
-                return TipoDato.BOOLEANO; // El resultado de comparar es un True/False
+        // Regla semántica para comparaciones
+        if (operador.equals(">") || operador.equals("<") || operador.equals("==")
+                || operador.equals(">=") || operador.equals("<=") || operador.equals("!=")) {
+
+            // Los operadores de orden (>, <, >=, <=) NO tienen sentido sobre cadenas de texto
+            boolean esOperadorDeOrden = operador.equals(">") || operador.equals("<")
+                    || operador.equals(">=") || operador.equals("<=");
+            if (esOperadorDeOrden && (tIzq == TipoDato.CADENA || tDer == TipoDato.CADENA)) {
+                throw new Exception(
+                        "Error Semántico: El operador '" + operador + "' no puede aplicarse a texto. " +
+                                "Solo se permiten '=' y '!=' para columnas de tipo cadena.");
             }
-            throw new Exception("Error Semántico: No se puede comparar " + tIzq + " con " + tDer);
+
+            // Para igualdad/diferencia: los tipos deben coincidir (o ambos numéricos)
+            boolean mismoPrecisamente = (tIzq == tDer);
+            boolean ambosNumericos    = esNumerico(tIzq) && esNumerico(tDer);
+            if (mismoPrecisamente || ambosNumericos) {
+                return TipoDato.BOOLEANO;
+            }
+            throw new Exception("Error Semántico: No se puede comparar " + tIzq + " con " + tDer + ".");
         }
 
         // Regla para operadores lógicos (Y, O)
@@ -55,13 +72,21 @@ public class NodoOperacionBinaria implements NodoAST {
 
     @Override
     public String generarPython() {
-        // Traducimos nuestros operadores a los de Pandas
+        return generarPythonConDf("df");
+    }
+
+    @Override
+    public String generarPythonConDf(String nombreDf) {
         String opPython = switch (operador) {
-            case "Y" -> "&";
-            case "O" -> "|";
+            case "Y"  -> "&";
+            case "O"  -> "|";
             case "==" -> "==";
-            default -> operador;
+            default   -> operador;
         };
-        return "(" + izq.generarPython() + " " + opPython + " " + der.generarPython() + ")";
+        String izqPy = (izq instanceof NodoColumna col)
+                ? nombreDf + "[" + col.generarPython() + "]"
+                : izq.generarPythonConDf(nombreDf);
+        String derPy = der.generarPythonConDf(nombreDf);
+        return "(" + izqPy + " " + opPython + " " + derPy + ")";
     }
 }

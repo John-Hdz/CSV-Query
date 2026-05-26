@@ -13,12 +13,8 @@ public class TablaSimbolosCSV
     // Diccionario que guarda "nombre_columna" -> TipoDato
     private static Map<String, TipoDato> columnas = new HashMap<>();
 
-    /**
-     * Lee el archivo CSV, extrae las columnas y deduce sus tipos de datos.
-     * Este método debe llamarse desde el NodoDesde.
-     */
     public static void cargarArchivo(String rutaArchivo) throws Exception {
-        columnas.clear(); // Limpiamos por si hay consultas anteriores
+        columnas.clear();
 
         try (CSVReader reader = new CSVReader(new FileReader(rutaArchivo))) {
             String[] encabezados = reader.readNext();
@@ -48,40 +44,31 @@ public class TablaSimbolosCSV
         }
     }
 
-    /**
-     * Verifica si una columna existe en el CSV cargado.
-     */
     public static boolean existeColumna(String nombre) {
         return columnas.containsKey(nombre);
     }
 
-    /**
-     * Devuelve el tipo de dato de una columna para las validaciones semánticas.
-     */
     public static TipoDato obtenerTipoColumna(String nombre) {
         return columnas.getOrDefault(nombre, TipoDato.ERROR);
     }
 
-    /**
-     * Método auxiliar para deducir si un texto es entero, decimal, etc.
-     */
     private static TipoDato inferirTipo(String valor) {
         if (valor.isEmpty()) return TipoDato.CADENA;
 
-        // ¿Es un entero? (Solo dígitos)
+        //(Solo dígitos)
         if (valor.matches("-?\\d+")) {
             return TipoDato.ENTERO;
         }
-        // ¿Es un decimal? (Dígitos con un punto)
+        // (Dígitos con un punto)
         if (valor.matches("-?\\d+\\.\\d+")) {
             return TipoDato.DECIMAL;
         }
-        // ¿Es booleano?
+        // boolean
         if (valor.equalsIgnoreCase("true") || valor.equalsIgnoreCase("false")) {
             return TipoDato.BOOLEANO;
         }
 
-        // Si no es nada de lo anterior, es texto plano
+        // texto plano
         return TipoDato.CADENA;
     }
 }

@@ -6,6 +6,7 @@ module org.example.csvquery {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
     requires com.opencsv;
+    requires org.fxmisc.richtext;
 
     opens org.example.csvquery to javafx.fxml;
     exports org.example.csvquery;

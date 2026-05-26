@@ -4,26 +4,12 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 
-/**
- * Escribe el script Python en un archivo temporal,
- * lo ejecuta con ProcessBuilder y devuelve el resultado
- * como String CSV (o un mensaje de error).
- */
+
 public class PandasRunner {
 
-    /**
-     * Resultado de ejecutar el script.
-     * @param exitoso  true si Python terminó sin errores
-     * @param salida   stdout del proceso (CSV o valor escalar)
-     * @param error    stderr del proceso (mensaje de error si exitoso=false)
-     */
     public record Resultado(boolean exitoso, String salida, String error) {}
 
-    /**
-     * Ejecuta el script Python y espera el resultado.
-     * @param scriptPython  código Python generado por PandasTranslator
-     * @param timeoutSeg    segundos máximos de espera (recomendado: 30)
-     */
+
     public static Resultado ejecutar(String scriptPython, int timeoutSeg) {
         File scriptTemp = null;
         try {
@@ -32,7 +18,6 @@ public class PandasRunner {
             scriptTemp.deleteOnExit();
             Files.writeString(scriptTemp.toPath(), scriptPython, StandardCharsets.UTF_8);
 
-            // Construir el proceso
             String pythonCmd = encontrarPython();
 
             ProcessBuilder pb = new ProcessBuilder(pythonCmd, scriptTemp.getAbsolutePath());
@@ -41,7 +26,6 @@ public class PandasRunner {
 
             Process proceso = pb.start();
 
-            //Leer stdout y stderr en paralelo para evitar bloqueos
             StringBuffer stdout = new StringBuffer();
             StringBuffer stderr = new StringBuffer();
 
@@ -66,7 +50,6 @@ public class PandasRunner {
             hiloOut.start();
             hiloErr.start();
 
-            //Esperar con timeout
             boolean termino = proceso.waitFor(timeoutSeg, java.util.concurrent.TimeUnit.SECONDS);
             hiloOut.join(2000);
             hiloErr.join(2000);
@@ -93,10 +76,6 @@ public class PandasRunner {
         }
     }
 
-    /**
-     * Detecta el comando Python disponible en el sistema.
-     *
-     */
     private static String encontrarPython() {
         for (String cmd : new String[]{"python3", "python"}) {
             try {

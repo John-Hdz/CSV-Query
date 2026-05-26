@@ -36,6 +36,20 @@ public class NodoConsulta implements NodoAST {
     }
 
 
+    // ── Accessors para NodoSubconsulta ───────────────────────────────────────
+
+    public NodoDesde     getDesde()    { return desde; }
+    public NodoDonde     getDonde()    { return donde; }
+    public NodoSeleccion getSeleccion(){ return seleccion; }
+
+    /**
+     * Devuelve el TipoDato del resultado de esta consulta (para subconsultas escalares).
+     * Solo tiene sentido llamarlo después de validarSemantica().
+     */
+    public TipoDato getTipoResultado() {
+        return seleccion.getTipoResultado();
+    }
+
     // ── Descripción para la UI del AST ───────────────────────────────────────
 
     public NodoInfo toInfo() {
@@ -94,7 +108,12 @@ public class NodoConsulta implements NodoAST {
         script.append("import pandas as pd\n");
         script.append("import sys\n\n");
 
-        // Leer CSV
+        // Si hay subconsultas en el DONDE, generamos sus bloques auxiliares primero
+        if (donde != null) {
+            script.append(generarBloqueSubconsultas(donde));
+        }
+
+        // Leer CSV principal
         script.append(desde.generarPython());
 
         // Filtrar filas
@@ -107,24 +126,35 @@ public class NodoConsulta implements NodoAST {
         if (limitar != null) script.append(limitar.generarPython());
 
         // Proyección (TRAER columnas / DISTINTO / agregación)
-        // Si hay agregación, la selección ya imprime el escalar y terminamos
         if (seleccion.tieneAgregacion()) {
             script.append(seleccion.generarPython());
             return script.toString();
         }
 
-        // Proyección de columnas y/o DISTINTO
         script.append(seleccion.generarPython());
 
         // Salida: GUARDAR EN o imprimir resultado
         if (guardar != null) {
             script.append(guardar.generarPython());
-            // También mostramos en pantalla para la tabla de la UI
-            script.append("print(df.to_csv(index=False))\n");
         } else {
             script.append("print(df.to_csv(index=False))\n");
         }
 
         return script.toString();
+    }
+
+    /** Recorre el árbol de condiciones buscando NodoSubconsulta y emite sus bloques auxiliares. */
+    private String generarBloqueSubconsultas(NodoDonde nodo) {
+        return recolectarSubconsultas(nodo.getExpresion());
+    }
+
+    private String recolectarSubconsultas(NodoAST nodo) {
+        if (nodo instanceof NodoSubconsulta sub) {
+            return sub.generarPythonBloque();
+        }
+        if (nodo instanceof NodoOperacionBinaria op) {
+            return recolectarSubconsultas(op.getIzq()) + recolectarSubconsultas(op.getDer());
+        }
+        return "";
     }
 }

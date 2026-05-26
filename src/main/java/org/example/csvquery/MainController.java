@@ -13,14 +13,18 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import org.example.csvquery.models.Lexer;
-import org.example.csvquery.Parser;
 import org.example.csvquery.models.Token;
+import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
 
 import java.io.*;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainController implements Initializable {
 
@@ -31,7 +35,9 @@ public class MainController implements Initializable {
     @FXML private Button btnTema;
 
     // ── Editor ───────────────────────────────────────────────
-    @FXML private TextArea editorSQL;
+//    @FXML private TextArea editorSQL;
+    @FXML private StackPane editorContainer;
+    private CodeArea editorSQL;
     @FXML private VBox     lineNumbers;
 
     // ── Status bar ───────────────────────────────────────────
@@ -46,6 +52,7 @@ public class MainController implements Initializable {
     @FXML private Button tabLexico;
     @FXML private Button tabTokens;
     @FXML private Button tabConsola;
+    @FXML private Button tabCodigo;
 
     // ── Results table ────────────────────────────────────────
     @FXML private TableView<ObservableList<String>> tablaResultados;
@@ -53,6 +60,15 @@ public class MainController implements Initializable {
     // ── Panel léxico (ScrollPane + VBox internos del FXML) ───
     @FXML private ScrollPane panelLexico;
     @FXML private VBox       vboxLexico;
+
+    // ── Panel código intermedio ───────────────────────────────
+    @FXML private VBox     panelCodigo;
+    @FXML private TextArea areaCodigo;
+
+    // ── Panel consola de compilación ──────────────────────────
+    @FXML private VBox       panelConsola;
+    @FXML private VBox       vboxConsola;
+    @FXML private ScrollPane consolaScroll;
 
     // ── Dictionary panel ─────────────────────────────────────
     @FXML private Label lblFilas;
@@ -67,24 +83,83 @@ public class MainController implements Initializable {
     private String       ultimoScriptPy = "";
     private org.example.csvquery.models.ast.NodoConsulta ultimoAST = null;
 
+    private enum TipoEntrada { SISTEMA, OK, INFO, ERROR, SEPARADOR }
+
+    private record EntradaConsola(TipoEntrada tipo, int errorId, String mensaje) {
+        static EntradaConsola sistema(String msg)              { return new EntradaConsola(TipoEntrada.SISTEMA,   0, msg); }
+        static EntradaConsola ok(String msg)                   { return new EntradaConsola(TipoEntrada.OK,        0, msg); }
+        static EntradaConsola info(String msg)                 { return new EntradaConsola(TipoEntrada.INFO,      0, msg); }
+        static EntradaConsola error(int id, String msg)        { return new EntradaConsola(TipoEntrada.ERROR,  id, msg); }
+        static EntradaConsola separador()                      { return new EntradaConsola(TipoEntrada.SEPARADOR, 0, ""); }
+    }
+
+    private final List<EntradaConsola> consolaEntradas = new ArrayList<>();
+
     private static final String RUTA_AUTOMATA =
             "src/main/resources/CSV/Matriz de transicion 2.csv";
 
-    // ══════════════════════════════════════════════════════════
-    //  INICIALIZACIÓN
-    // ══════════════════════════════════════════════════════════
-
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        editorSQL.setText(
+
+        editorSQL = new CodeArea();
+        editorSQL.getStyleClass().add("mi-editor-codigo");
+        editorSQL.setParagraphGraphicFactory(LineNumberFactory.get(editorSQL));
+
+        editorSQL.textProperty().addListener((obs, oldText, newText) -> {
+            editorSQL.setStyleSpans(0, computeHighlighting(newText));
+        });
+
+        editorContainer.getChildren().add(editorSQL);
+
+        editorSQL.replaceText(
                 "-- Escribe tu consulta aquí\n\n" +
-                        "TRAER nombre, edad DESDE \"datos.csv\" DONDE edad > 20;"
+                        "TRAER nombre, edad DESDE \"src/main/resources/CSV/datos.csv\" DONDE edad > 20;"
         );
-        sincronizarNumerosLinea();
+
         sincronizarCursor();
+
         setEstado("LISTO", "lbl-estado");
         log("INFO", "Aplicación iniciada.");
         log("INFO", "Autómata esperado en: " + RUTA_AUTOMATA);
+    }
+
+    // palabras reservadas y funciones
+    private static final String[] KEYWORDS = new String[] {
+            "TRAER", "DESDE", "DONDE", "Y", "O", "ORDENAR", "POR", "ASC", "DESC", "LIMITAR", "DISTINTO", "GUARDAR", "EN"
+    };
+    private static final String[] FUNCTIONS = new String[] {
+            "CONTAR", "SUMA", "PROMEDIO", "MAXIMO", "MINIMO"
+    };
+
+    private static final String KEYWORD_PATTERN = "\\b(" + String.join("|", KEYWORDS) + ")\\b";
+    private static final String FUNCTION_PATTERN = "\\b(" + String.join("|", FUNCTIONS) + ")\\b";
+    private static final String STRING_PATTERN = "\"([^\"]*)\""; // Para detectar textos entre comillas
+
+    private static final Pattern PATTERN = Pattern.compile(
+            "(?<KEYWORD>" + KEYWORD_PATTERN + ")"
+                    + "|(?<FUNCTION>" + FUNCTION_PATTERN + ")"
+                    + "|(?<STRING>" + STRING_PATTERN + ")"
+    );
+    private StyleSpans<Collection<String>> computeHighlighting(String text) {
+        Matcher matcher = PATTERN.matcher(text);
+        int lastKwEnd = 0;
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+
+        while(matcher.find()) {
+            String styleClass =
+                    matcher.group("KEYWORD") != null ? "keyword" :
+                            matcher.group("FUNCTION") != null ? "function" :
+                                    matcher.group("STRING") != null ? "string" :
+                                            "default-text"; // <-- CAMBIO AQUÍ: Clase por defecto en lugar de null
+
+            // CAMBIO AQUÍ: Usamos "default-text" en lugar de emptyList()
+            spansBuilder.add(Collections.singleton("default-text"), matcher.start() - lastKwEnd);
+            spansBuilder.add(Collections.singleton(styleClass), matcher.end() - matcher.start());
+            lastKwEnd = matcher.end();
+        }
+        // CAMBIO AQUÍ: Usamos "default-text" para el texto final
+        spansBuilder.add(Collections.singleton("default-text"), text.length() - lastKwEnd);
+        return spansBuilder.create();
     }
 
     // ══════════════════════════════════════════════════════════
@@ -124,7 +199,7 @@ public class MainController implements Initializable {
             log("INFO", "Archivo seleccionado: " + file.getAbsolutePath());
             cargarEncabezados(file);
             String ruta = file.getAbsolutePath().replace("\\", "/");
-            editorSQL.setText(
+            editorSQL.replaceText(
                     "-- Ejecutando consulta local\n\n" +
                             "TRAER * DESDE \"" + ruta + "\";"
             );
@@ -141,17 +216,18 @@ public class MainController implements Initializable {
         ultimoAST = null;
         logConsola.clear();
         ultimoScriptPy = "";
-        if (vboxLexico != null) vboxLexico.getChildren().clear();
+        consolaEntradas.clear();
+        if (vboxLexico  != null) vboxLexico.getChildren().clear();
+        if (vboxConsola != null) vboxConsola.getChildren().clear();
+        if (areaCodigo  != null) areaCodigo.clear();
         setEstado("LISTO", "lbl-estado");
         lblCursor.setText("LÍNEA 1, COL 1");
         actualizarNumerosLinea(1);
         mostrarPanel(tablaResultados);
-        activarTab(tabResultado, tabLexico, tabTokens, tabConsola);
+        activarTab(tabResultado, tabLexico, tabTokens, tabConsola, tabCodigo);
     }
 
-    // ══════════════════════════════════════════════════════════
-    //  EJECUTAR CONSULTA — flujo principal
-    // ══════════════════════════════════════════════════════════
+    //  EJECUTAR CONSULTA
 
     @FXML
     public void onEjecutarConsulta() {
@@ -162,8 +238,11 @@ public class MainController implements Initializable {
             return;
         }
 
+        consolaEntradas.clear();
+        logConsola.clear();
+        ultimoScriptPy = "";
+
         setEstado("ANALIZANDO...", "lbl-estado-running");
-        log("INFO", "Iniciando análisis léxico...");
 
         // ── Archivo temporal para el Lexer ───────────────────────────────
         File tempQuery = null;
@@ -171,9 +250,7 @@ public class MainController implements Initializable {
             tempQuery = File.createTempFile("csvquery_input_", ".txt");
             tempQuery.deleteOnExit();
             String sinComentarios = texto.replaceAll("--[^\n]*", "").trim();
-            try (FileWriter fw = new FileWriter(tempQuery)) {
-                fw.write(sinComentarios);
-            }
+            try (FileWriter fw = new FileWriter(tempQuery)) { fw.write(sinComentarios); }
         } catch (IOException e) {
             alerta("Error", "No se pudo crear archivo temporal: " + e.getMessage());
             setEstado("ERROR", "lbl-estado-error");
@@ -181,6 +258,8 @@ public class MainController implements Initializable {
         }
 
         // ── Análisis Léxico ───────────────────────────────────────────────
+        consolaEntradas.add(EntradaConsola.sistema("Iniciando análisis léxico..."));
+
         Lexer lexer = new Lexer(RUTA_AUTOMATA);
         lexer.analizarArchivo(tempQuery.getAbsolutePath());
         tempQuery.delete();
@@ -188,95 +267,147 @@ public class MainController implements Initializable {
         ultimosTokens  = lexer.getTablaSimbolos();
         ultimosErrores = lexer.getPilaErrores();
 
-        log("INFO", "Tokens reconocidos: " + ultimosTokens.size());
+        consolaEntradas.add(EntradaConsola.ok(
+                "Autómata cargado — " + ultimosTokens.size() + " token(s) reconocido(s)"));
 
-        // Construir el panel léxico siempre, incluso si hay errores
         construirPanelSintactico(ultimoAST, ultimosTokens, ultimosErrores);
 
         if (!ultimosErrores.isEmpty()) {
-            log("ERROR", "Errores léxicos detectados: " + ultimosErrores.size());
-            for (Token e : ultimosErrores)
-                log("ERROR", "  " + e.getNombre() + ": '" + e.getLexema() + "'");
-            alerta("Error léxico",
-                    "Se encontraron " + ultimosErrores.size() + " error(es) léxico(s).\n" +
-                            "Revisa la pestaña '🔬 Análisis Léxico'.");
+            consolaEntradas.add(EntradaConsola.separador());
+            for (Token e : ultimosErrores) {
+                int id = clasificarErrorLexico(e.getNombre());
+                consolaEntradas.add(EntradaConsola.error(id,
+                        "'" + e.getLexema() + "' — " + descripcionError(e.getNombre())));
+                log("ERROR", "[" + id + "] " + e.getNombre() + ": '" + e.getLexema() + "'");
+            }
             setEstado("ERROR LÉXICO", "lbl-estado-error");
-            // Navegar automáticamente al panel léxico para mostrar el error
             mostrarPanel(panelLexico);
-            activarTab(tabLexico, tabResultado, tabTokens, tabConsola);
+            activarTab(tabLexico, tabResultado, tabTokens, tabConsola, tabCodigo);
             return;
         }
 
+        consolaEntradas.add(EntradaConsola.separador());
+
         // ── Análisis Sintáctico ───────────────────────────────────────────
+        consolaEntradas.add(EntradaConsola.sistema("Iniciando análisis sintáctico..."));
         setEstado("ANÁLISIS SINTÁCTICO...", "lbl-estado-running");
-        log("INFO", "Iniciando análisis sintáctico (Parser)...");
+
         org.example.csvquery.models.ast.NodoConsulta ast;
         try {
             Parser parser = new Parser(ultimosTokens);
             ast = parser.parsear();
             ultimoAST = ast;
+            consolaEntradas.add(EntradaConsola.ok("AST construido correctamente"));
             log("INFO", "AST construido correctamente.");
         } catch (Parser.ParseException e) {
-            alerta("Error Sintáctico", e.getMessage());
-            log("ERROR", "Error sintáctico: " + e.getMessage());
+            int id = 5100 + clasificarErrorSintactico(e.getMessage());
+            consolaEntradas.add(EntradaConsola.error(id, e.getMessage()));
+            log("ERROR", "[" + id + "] " + e.getMessage());
             setEstado("ERROR SINTÁCTICO", "lbl-estado-error");
-            mostrarConsolaEnTabla();
-            mostrarPanel(tablaResultados);
-            activarTab(tabConsola, tabLexico, tabResultado, tabTokens);
+            mostrarPanel(panelConsola);
+            activarTab(tabConsola, tabLexico, tabResultado, tabTokens, tabCodigo);
+            renderizarConsola();
             return;
         }
+
+        consolaEntradas.add(EntradaConsola.separador());
 
         // ── Análisis Semántico ────────────────────────────────────────────
+        consolaEntradas.add(EntradaConsola.sistema("Iniciando análisis semántico..."));
         setEstado("ANÁLISIS SEMÁNTICO...", "lbl-estado-running");
-        log("INFO", "Iniciando análisis semántico...");
+
         try {
             ast.validarSemantica();
+            consolaEntradas.add(EntradaConsola.ok("Validación semántica exitosa"));
             log("INFO", "Validación semántica exitosa.");
         } catch (Exception e) {
-            alerta("Error Semántico", e.getMessage());
-            log("ERROR", "Error semántico: " + e.getMessage());
+            int id = 5200 + clasificarErrorSemantico(e.getMessage());
+            consolaEntradas.add(EntradaConsola.error(id, e.getMessage()));
+            log("ERROR", "[" + id + "] " + e.getMessage());
             setEstado("ERROR SEMÁNTICO", "lbl-estado-error");
-            mostrarConsolaEnTabla();
-            mostrarPanel(tablaResultados);
-            activarTab(tabConsola, tabLexico, tabResultado, tabTokens);
+            mostrarPanel(panelConsola);
+            activarTab(tabConsola, tabLexico, tabResultado, tabTokens, tabCodigo);
+            renderizarConsola();
             return;
         }
 
-        // ── Generación de código Python ───────────────────────────────────
+        consolaEntradas.add(EntradaConsola.separador());
+
+        // ── Generación de código ──────────────────────────────────────────
+        consolaEntradas.add(EntradaConsola.sistema("Generando código intermedio..."));
         setEstado("GENERANDO SCRIPT...", "lbl-estado-running");
         ultimoScriptPy = ast.generarPython();
-        log("INFO", "Script Python generado:");
-        for (String linea : ultimoScriptPy.split("\n"))
-            log("SCRIPT", linea);
+        consolaEntradas.add(EntradaConsola.ok("Script Python generado — "
+                + ultimoScriptPy.lines().count() + " línea(s)"));
+        for (String linea : ultimoScriptPy.split("\n")) log("SCRIPT", linea);
 
-        // ── Ejecución con Pandas ──────────────────────────────────────────
+        consolaEntradas.add(EntradaConsola.separador());
+
+        // ── Ejecución ─────────────────────────────────────────────────────
+        consolaEntradas.add(EntradaConsola.sistema("Ejecutando script con Pandas..."));
         setEstado("EJECUTANDO...", "lbl-estado-running");
-        log("INFO", "Ejecutando script con pandas...");
-        PandasRunner.Resultado resultado = PandasRunner.ejecutar(ultimoScriptPy, 30);
 
+        PandasRunner.Resultado resultado = PandasRunner.ejecutar(ultimoScriptPy, 30);
         if (!resultado.exitoso()) {
+            int id = 5210; // error de ejecución Python
+            consolaEntradas.add(EntradaConsola.error(id, resultado.error()));
+            log("ERROR", "[" + id + "] " + resultado.error());
             alerta("Error en Python", resultado.error());
-            log("ERROR", resultado.error());
             setEstado("ERROR PYTHON", "lbl-estado-error");
-            mostrarConsolaEnTabla();
-            mostrarPanel(tablaResultados);
-            activarTab(tabConsola, tabLexico, tabResultado, tabTokens);
             return;
         }
 
         log("INFO", "Consulta ejecutada con éxito.");
+        consolaEntradas.add(EntradaConsola.ok("Consulta ejecutada con éxito"));
 
         // ── Mostrar resultado ─────────────────────────────────────────────
         String salida = resultado.salida();
-        if (!salida.contains(",") && !salida.contains("\n")) {
-            mostrarEscalar(salida);
-        } else {
-            mostrarResultadoCSV(salida);
-        }
+        if (!salida.contains(",") && !salida.contains("\n")) mostrarEscalar(salida);
+        else mostrarResultadoCSV(salida);
 
         setEstado("LISTO", "lbl-estado");
         mostrarPanel(tablaResultados);
-        activarTab(tabResultado, tabLexico, tabTokens, tabConsola);
+        activarTab(tabResultado, tabLexico, tabTokens, tabConsola, tabCodigo);
+    }
+
+    // ── Clasificadores de error ────────────────────────────────────────────────
+
+    /** Devuelve el ID léxico (serie 5000) según el tipo de error del token */
+    private int clasificarErrorLexico(String nombreToken) {
+        return switch (nombreToken) {
+            case "ERROR_OPERADOR_INCOMPLETO" -> 5001;
+            case "ERROR_CADENA_SIN_CERRAR"   -> 5002;
+            case "ERROR_NUMERO_INVALIDO"     -> 5003;
+            default                          -> 5000;
+        };
+    }
+
+    private int clasificarErrorSintactico(String mensaje) {
+        if (mensaje == null) return 0;
+        String m = mensaje.toLowerCase();
+        if (m.contains("traer"))                       return 1;  // 5101 falta TRAER
+        if (m.contains("desde"))                       return 2;  // 5102 falta DESDE
+        if (m.contains("archivo") || m.contains("csv")) return 3; // 5103 falta ruta CSV
+        if (m.contains("operador de comparación"))     return 4;  // 5104 operador inválido
+        if (m.contains("paréntesis"))                  return 5;  // 5105 paréntesis sin cerrar
+        if (m.contains("punto y coma") || m.contains(";")) return 6; // 5106 falta ;
+        if (m.contains("columna"))                     return 7;  // 5107 columna inválida
+        if (m.contains("literal") || m.contains("valor")) return 8; // 5108 literal inválido
+        return 0;                                                  // 5100 genérico
+    }
+
+    private int clasificarErrorSemantico(String mensaje) {
+        if (mensaje == null) return 0;
+        String m = mensaje.toLowerCase();
+        if (m.contains("columna") && m.contains("no existe")) return 1; // 5201 columna inexistente
+        if (m.contains("archivo") && m.contains("no exist"))  return 2; // 5202 archivo no existe
+        if (m.contains("operador") && m.contains("cadena"))   return 3; // 5203 operador orden en cadena
+        if (m.contains("comparar"))                            return 4; // 5204 tipos incompatibles
+        if (m.contains("aritmético") || m.contains("numérico")) return 5; // 5205 op aritmético en no-número
+        if (m.contains("lógico") || m.contains("booleano"))   return 6; // 5206 op lógico mal tipado
+        if (m.contains("agregación") || m.contains("contar")
+                || m.contains("suma") || m.contains("promedio"))     return 7; // 5207 error de agregación
+        return 0;                                                        // 5200 genérico
     }
 
     // ══════════════════════════════════════════════════════════
@@ -285,32 +416,120 @@ public class MainController implements Initializable {
 
     @FXML public void onTabResultado() {
         mostrarPanel(tablaResultados);
-        activarTab(tabResultado, tabLexico, tabTokens, tabConsola);
+        activarTab(tabResultado, tabLexico, tabTokens, tabConsola, tabCodigo);
     }
 
     @FXML public void onTabLexico() {
         mostrarPanel(panelLexico);
-        activarTab(tabLexico, tabResultado, tabTokens, tabConsola);
+        activarTab(tabLexico, tabResultado, tabTokens, tabConsola, tabCodigo);
         construirPanelSintactico(ultimoAST, ultimosTokens, ultimosErrores);
     }
 
     @FXML public void onTabTokens() {
         mostrarPanel(tablaResultados);
-        activarTab(tabTokens, tabLexico, tabResultado, tabConsola);
+        activarTab(tabTokens, tabLexico, tabResultado, tabConsola, tabCodigo);
         mostrarTokensEnTabla(ultimosTokens);
     }
 
     @FXML public void onTabConsola() {
-        mostrarPanel(tablaResultados);
-        activarTab(tabConsola, tabLexico, tabResultado, tabTokens);
-        mostrarConsolaEnTabla();
+        mostrarPanel(panelConsola);
+        activarTab(tabConsola, tabLexico, tabResultado, tabTokens, tabCodigo);
+        renderizarConsola();
     }
 
-    /** Alterna visibilidad entre tablaResultados y panelLexico en el StackPane */
+    @FXML public void onTabCodigo() {
+        mostrarPanel(panelCodigo);
+        activarTab(tabCodigo, tabLexico, tabResultado, tabTokens, tabConsola);
+        if (ultimoScriptPy == null || ultimoScriptPy.isBlank()) {
+            areaCodigo.setText("-- Ejecuta una consulta para ver el código Python generado.");
+        } else {
+            areaCodigo.setText(ultimoScriptPy);
+        }
+    }
+
+    /** Renderiza consolaEntradas en el VBox de la consola visual */
+    private void renderizarConsola() {
+        if (vboxConsola == null) return;
+        vboxConsola.getChildren().clear();
+
+        if (consolaEntradas.isEmpty()) {
+            Label vacio = new Label("  Ejecuta una consulta para ver los resultados de compilación.");
+            vacio.getStyleClass().add("consola-info");
+            vboxConsola.getChildren().add(vacio);
+            return;
+        }
+
+        for (EntradaConsola e : consolaEntradas) {
+            switch (e.tipo()) {
+                case SEPARADOR -> {
+                    javafx.scene.control.Separator sep = new javafx.scene.control.Separator();
+                    sep.getStyleClass().add("consola-sep");
+                    sep.setPadding(new javafx.geometry.Insets(4, 0, 4, 0));
+                    vboxConsola.getChildren().add(sep);
+                }
+                case SISTEMA -> {
+                    HBox fila = new HBox(8);
+                    fila.getStyleClass().add("consola-fila-sistema");
+                    Label prompt = new Label("$");           prompt.getStyleClass().add("consola-prompt");
+                    Label msg    = new Label(e.mensaje());   msg.getStyleClass().add("consola-sistema");
+                    fila.getChildren().addAll(prompt, msg);
+                    vboxConsola.getChildren().add(fila);
+                }
+                case OK -> {
+                    HBox fila = new HBox(8);
+                    fila.getStyleClass().add("consola-fila-ok");
+                    Label ico = new Label("✓");           ico.getStyleClass().add("consola-ico-ok");
+                    Label msg = new Label(e.mensaje());   msg.getStyleClass().add("consola-ok");
+                    fila.getChildren().addAll(ico, msg);
+                    vboxConsola.getChildren().add(fila);
+                }
+                case INFO -> {
+                    HBox fila = new HBox(8);
+                    fila.getStyleClass().add("consola-fila-info");
+                    Label ico = new Label("·");           ico.getStyleClass().add("consola-ico-info");
+                    Label msg = new Label(e.mensaje());   msg.getStyleClass().add("consola-info");
+                    fila.getChildren().addAll(ico, msg);
+                    vboxConsola.getChildren().add(fila);
+                }
+                case ERROR -> {
+                    VBox bloque = new VBox(4);
+                    bloque.getStyleClass().add("consola-bloque-error");
+                    bloque.setPadding(new javafx.geometry.Insets(8, 12, 8, 12));
+
+                    HBox cabecera = new HBox(8);
+                    cabecera.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+                    Label ico   = new Label("✕");                     ico.getStyleClass().add("consola-ico-error");
+                    Label badge = new Label("ERR " + e.errorId());    badge.getStyleClass().add("consola-badge-error");
+                    Label serie = new Label(serieError(e.errorId())); serie.getStyleClass().add("consola-serie");
+                    cabecera.getChildren().addAll(ico, badge, serie);
+
+                    Label msg = new Label(e.mensaje());
+                    msg.getStyleClass().add("consola-error-msg");
+                    msg.setWrapText(true);
+
+                    bloque.getChildren().addAll(cabecera, msg);
+                    vboxConsola.getChildren().add(bloque);
+                }
+            }
+        }
+
+        // Auto-scroll al fondo
+        consolaScroll.layout();
+        consolaScroll.setVvalue(1.0);
+    }
+
+    private String serieError(int id) {
+        if (id >= 5200) return "SEMÁNTICO";
+        if (id >= 5100) return "SINTÁCTICO";
+        return "LÉXICO";
+    }
+
+    /** Alterna visibilidad entre los paneles del StackPane */
     private void mostrarPanel(javafx.scene.Node panelVisible) {
         tablaResultados.setVisible(panelVisible == tablaResultados);
-        if (panelLexico != null)
-            panelLexico.setVisible(panelVisible == panelLexico);
+        if (panelLexico  != null) panelLexico .setVisible(panelVisible == panelLexico);
+        if (panelCodigo  != null) panelCodigo .setVisible(panelVisible == panelCodigo);
+        if (panelConsola != null) panelConsola.setVisible(panelVisible == panelConsola);
     }
 
     private void activarTab(Button activo, Button... inactivos) {
@@ -323,10 +542,6 @@ public class MainController implements Initializable {
                 b.getStyleClass().add("btn-tab");
         }
     }
-
-    // ══════════════════════════════════════════════════════════
-    //  PANEL LÉXICO — vista por cláusula
-    // ══════════════════════════════════════════════════════════
 
     // ══════════════════════════════════════════════════════════
     //  PANEL SINTÁCTICO — árbol AST + cláusulas
@@ -465,10 +680,6 @@ public class MainController implements Initializable {
         }
     }
 
-    /**
-     * Renderiza recursivamente un NodoInfo como filas indentadas dentro del VBox del árbol.
-     * Cada nivel de profundidad agrega 20px de indentación.
-     */
     private void renderNodo(org.example.csvquery.models.ast.NodoInfo nodo, VBox contenedor, int nivel) {
         HBox fila = new HBox(8);
         fila.setAlignment(Pos.CENTER_LEFT);
@@ -517,121 +728,6 @@ public class MainController implements Initializable {
         };
     }
 
-    private void construirPanelLexico(List<Token> tokens, List<Token> errores) {
-        if (vboxLexico == null) return;
-        vboxLexico.getChildren().clear();
-
-        if (tokens == null || tokens.isEmpty()) {
-            Label empty = new Label("Ejecuta una consulta para ver el análisis léxico.");
-            empty.getStyleClass().add("lbl-empty");
-            vboxLexico.getChildren().add(empty);
-            return;
-        }
-
-        // ── Barra de resumen ──────────────────────────────────────────────
-        HBox resumen = new HBox(12);
-        resumen.setPadding(new Insets(0, 0, 12, 0));
-        resumen.getChildren().addAll(
-                crearStatCard(String.valueOf(tokens.size()),  "tokens válidos",  false),
-                crearStatCard(String.valueOf(errores.size()), "errores léxicos", !errores.isEmpty()),
-                crearStatCard(String.valueOf(contarClausulas(tokens)), "cláusulas", false)
-        );
-        vboxLexico.getChildren().add(resumen);
-
-        // ── Agrupar tokens por cláusula ───────────────────────────────────
-        List<List<Token>> grupos       = new ArrayList<>();
-        List<String>      nombresGrupo = new ArrayList<>();
-        List<Token>       grupoActual  = null;
-        String            nombreActual = "";
-
-        for (Token t : tokens) {
-            if (esInicioClausula(t)) {
-                if (grupoActual != null) {
-                    grupos.add(grupoActual);
-                    nombresGrupo.add(nombreActual);
-                }
-                grupoActual  = new ArrayList<>();
-                nombreActual = t.getLexema().toUpperCase();
-            }
-            if (grupoActual != null) grupoActual.add(t);
-        }
-        if (grupoActual != null) {
-            grupos.add(grupoActual);
-            nombresGrupo.add(nombreActual);
-        }
-
-        Set<String> lexemasError = errores.stream()
-                .map(Token::getLexema)
-                .collect(Collectors.toSet());
-
-        // ── Renderizar cada cláusula ──────────────────────────────────────
-        for (int g = 0; g < grupos.size(); g++) {
-            List<Token> grupo      = grupos.get(g);
-            String      nombre     = nombresGrupo.get(g);
-            boolean     tieneError = grupo.stream()
-                    .anyMatch(t -> lexemasError.contains(t.getLexema()) || t.getId() >= 5000);
-
-            VBox clausulaBox = new VBox(6);
-            clausulaBox.setPadding(new Insets(10, 14, 10, 14));
-            clausulaBox.getStyleClass().add(tieneError ? "clausula-error" : "clausula-ok");
-
-            // Cabecera: nombre + badge de estado
-            HBox header = new HBox(8);
-            header.setAlignment(Pos.CENTER_LEFT);
-            Label lblNombre = new Label(nombre);
-            lblNombre.getStyleClass().add("clausula-nombre");
-            Label badge = new Label(tieneError ? "⚠ ERROR" : "✓ OK");
-            badge.getStyleClass().add(tieneError ? "badge-error" : "badge-ok");
-            header.getChildren().addAll(lblNombre, badge);
-
-            // Descripción semántica de la cláusula
-            Label desc = new Label(descripcionClausula(nombre));
-            desc.getStyleClass().add("clausula-desc");
-
-            // Chips de tokens en FlowPane (se adaptan al ancho)
-            FlowPane chips = new FlowPane(6, 6);
-            chips.setPadding(new Insets(6, 0, 0, 0));
-            for (Token t : grupo) {
-                boolean esErr = lexemasError.contains(t.getLexema()) || t.getId() >= 5000;
-                chips.getChildren().add(crearChip(t, esErr));
-            }
-
-            clausulaBox.getChildren().addAll(header, desc, chips);
-            vboxLexico.getChildren().add(clausulaBox);
-        }
-
-        // ── Sección de errores léxicos ────────────────────────────────────
-        if (!errores.isEmpty()) {
-            VBox errBox = new VBox(8);
-            errBox.setPadding(new Insets(10, 14, 10, 14));
-            errBox.getStyleClass().add("clausula-error");
-
-            Label titulo = new Label("Errores léxicos detectados");
-            titulo.getStyleClass().add("clausula-nombre");
-            errBox.getChildren().add(titulo);
-
-            for (Token e : errores) {
-                HBox fila = new HBox(10);
-                fila.setAlignment(Pos.CENTER_LEFT);
-
-                Label lBadge = new Label(e.getNombre());
-                lBadge.getStyleClass().add("badge-error");
-
-                Label lLex = new Label("'" + e.getLexema() + "'");
-                lLex.getStyleClass().add("chip-lexema-error");
-
-                Label lDesc = new Label(descripcionError(e.getNombre()));
-                lDesc.getStyleClass().add("clausula-desc");
-
-                fila.getChildren().addAll(lBadge, lLex, lDesc);
-                errBox.getChildren().add(fila);
-            }
-            vboxLexico.getChildren().add(errBox);
-        }
-    }
-
-    // ── Helpers del panel léxico ──────────────────────────────────────────────
-
     private VBox crearStatCard(String valor, String etiqueta, boolean peligro) {
         VBox card = new VBox(2);
         card.setPadding(new Insets(8, 16, 8, 16));
@@ -662,10 +758,6 @@ public class MainController implements Initializable {
                  "TOKEN_ORDENAR", "TOKEN_LIMITAR", "TOKEN_GUARDAR" -> true;
             default -> false;
         };
-    }
-
-    private int contarClausulas(List<Token> tokens) {
-        return (int) tokens.stream().filter(this::esInicioClausula).count();
     }
 
     private String categoriaChip(Token t) {
@@ -788,36 +880,6 @@ public class MainController implements Initializable {
         tablaResultados.setItems(items);
     }
 
-    private void mostrarConsolaEnTabla() {
-        tablaResultados.getColumns().clear();
-        tablaResultados.getItems().clear();
-
-        TableColumn<ObservableList<String>, String> cNivel = new TableColumn<>("NIVEL");
-        TableColumn<ObservableList<String>, String> cMsg   = new TableColumn<>("MENSAJE");
-        cNivel.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(0)));
-        cMsg  .setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(1)));
-        cNivel.setPrefWidth(80); cMsg.setPrefWidth(580);
-        tablaResultados.getColumns().addAll(cNivel, cMsg);
-
-        ObservableList<ObservableList<String>> items = FXCollections.observableArrayList();
-        for (String entrada : logConsola) {
-            String[] p = entrada.split("\\|", 2);
-            items.add(FXCollections.observableArrayList(
-                    p.length > 1 ? p[0] : "INFO",
-                    p.length > 1 ? p[1] : entrada
-            ));
-        }
-
-        if (!ultimoScriptPy.isEmpty()) {
-            items.add(FXCollections.observableArrayList("", ""));
-            items.add(FXCollections.observableArrayList("SCRIPT", "── Script Python generado ──"));
-            for (String linea : ultimoScriptPy.split("\n"))
-                items.add(FXCollections.observableArrayList("PY", linea));
-        }
-
-        tablaResultados.setItems(items);
-    }
-
     // ══════════════════════════════════════════════════════════
     //  ENCABEZADOS
     // ══════════════════════════════════════════════════════════
@@ -841,14 +903,6 @@ public class MainController implements Initializable {
     //  LÍNEAS Y CURSOR
     // ══════════════════════════════════════════════════════════
 
-    private void sincronizarNumerosLinea() {
-        if (lineNumbers == null) return;
-        editorSQL.textProperty().addListener((obs, o, n) -> {
-            long count = n.chars().filter(c -> c == '\n').count() + 1;
-            actualizarNumerosLinea((int) count);
-        });
-    }
-
     private void actualizarNumerosLinea(int count) {
         if (lineNumbers == null) return;
         lineNumbers.getChildren().clear();
@@ -860,12 +914,11 @@ public class MainController implements Initializable {
     }
 
     private void sincronizarCursor() {
-        editorSQL.caretPositionProperty().addListener((obs, o, n) -> {
-            String texto = editorSQL.getText();
-            int caret = n.intValue(), linea = 1, col = 1;
-            for (int i = 0; i < Math.min(caret, texto.length()); i++) {
-                if (texto.charAt(i) == '\n') { linea++; col = 1; } else col++;
-            }
+        editorSQL.caretPositionProperty().addListener((obs, oldPos, newPos) -> {
+            // En RichTextFX, los párrafos (líneas) y columnas empiezan en 0, por eso sumamos 1
+            int linea = editorSQL.getCurrentParagraph() + 1;
+            int col = editorSQL.getCaretColumn() + 1;
+
             lblCursor.setText("LÍNEA " + linea + ", COL " + col);
         });
     }

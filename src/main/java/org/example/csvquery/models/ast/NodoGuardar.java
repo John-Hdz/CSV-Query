@@ -26,6 +26,7 @@ public class NodoGuardar implements NodoAST {
     @Override
     public String generarPython() {
         return "df.to_csv(r\"" + rutaSalida + "\", index=False)\n" +
-                "print('Resultado guardado en: " + rutaSalida + "')\n";
+                "print('GUARDADO')\n" +
+                "print(df.to_csv(index=False))\n";
     }
 }

@@ -11,7 +11,6 @@ public class Lexer {
     private List<Token> tablaSimbolos = new ArrayList<>();
     private Stack<Token> pilaErrores = new Stack<>();
 
-    // Map<EstadoActual, Map<Caracter, EstadoSiguiente>>
     private Map<String, Map<String, String>> matrizTransicion = new HashMap<>();
     private List<String> columnasAlfabeto = new ArrayList<>();
 
@@ -19,11 +18,13 @@ public class Lexer {
         cargarAutómata(rutaCsvAutomata);
     }
 
-    // Cargar la matriz de transición desde el CSV
     private void cargarAutómata(String rutaCsv) {
         try (CSVReader reader = new CSVReader(new FileReader(rutaCsv))) {
             String[] encabezados = reader.readNext();
             if (encabezados != null) {
+                for (int i = 0; i < encabezados.length; i++) {
+                    encabezados[i] = sanitizarEncabezado(encabezados[i]);
+                }
                 columnasAlfabeto.addAll(Arrays.asList(encabezados).subList(1, encabezados.length));
             }
 
@@ -45,6 +46,17 @@ public class Lexer {
             System.err.println("Error al cargar el CSV del autómata: " + e.getMessage());
         }
     }
+    private String sanitizarEncabezado(String encabezado) {
+        if (encabezado == null) return "";
+        String s = encabezado.trim();
+        if (s.length() > 1 && s.endsWith("'")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        if (s.length() > 1 && s.startsWith("'")) {
+            s = s.substring(1);
+        }
+        return s;
+    }
 
 
     public void analizarArchivo(String rutaCodigoFuente) {
@@ -63,38 +75,26 @@ public class Lexer {
                 if (estadoSiguiente != null) {
 
                     if (esEstadoPostDelimitador(estadoSiguiente)) {
-                        // Emitir el token acumulado hasta ahora
                         if (lexemaActual.length() > 0) {
                             procesarToken(lexemaActual.toString().trim(), estadoSiguiente);
                             lexemaActual.setLength(0);
                         }
                         estadoActual = "q0";
-
-                        // Reprocessar el delimitador desde q0
-                        // (puede ser ws→ignorar, o coma/;/símbolo→su propio token)
                         String colKey2 = obtenerColumna(c);
                         Map<String, String> filaQ0 = matrizTransicion.get("q0");
                         String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
 
                         if (estadoDesdeQ0 != null) {
-                            // El delimitador es un token por sí mismo (ej: ',', ';', '*')
                             if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
-                                // Tokens de un solo carácter: emitir inmediatamente
                                 procesarToken(String.valueOf(c), estadoDesdeQ0);
                                 estadoActual = "q0";
                             } else {
-                                // Inicio de otro token (ej: letra, dígito, operador)
                                 lexemaActual.append(c);
                                 estadoActual = estadoDesdeQ0;
                             }
                         }
-                        // Si estadoDesdeQ0 es null (ej: whitespace sin transición definida
-                        // o no existe en la matriz), simplemente lo ignoramos → estadoActual = q0
 
                     } else if (esEstadoDeAceptacionDirecta(estadoSiguiente)) {
-                        // BUG FIX: Tokens de un solo carácter que se aceptan inmediatamente
-                        // (coma, punto y coma, paréntesis, !=, >=, <=).
-                        // El carácter SÍ forma parte del lexema.
                         lexemaActual.append(c);
                         procesarToken(lexemaActual.toString().trim(), estadoSiguiente);
                         lexemaActual.setLength(0);
@@ -107,41 +107,39 @@ public class Lexer {
                         estadoActual = "q0";
 
                     } else {
-                        // Estado intermedio: acumular carácter y continuar
                         lexemaActual.append(c);
                         estadoActual = estadoSiguiente;
                     }
 
                 } else {
-                    // Sin transición desde el estado actual con este carácter.
-                    // Emitir lo acumulado (si hay) y reiniciar.
                     if (lexemaActual.length() > 0) {
                         procesarToken(lexemaActual.toString().trim(), estadoActual);
                         lexemaActual.setLength(0);
                     }
                     estadoActual = "q0";
 
-                    // Intentar reprocessar el carácter actual desde q0
-                    String colKey2 = obtenerColumna(c);
-                    Map<String, String> filaQ0 = matrizTransicion.get("q0");
-                    String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
-                    if (estadoDesdeQ0 != null) {
-                        if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
-                            procesarToken(String.valueOf(c), estadoDesdeQ0);
-                        } else if (esEstadoDeError(estadoDesdeQ0)) {
-                            registrarError(String.valueOf(c), estadoDesdeQ0);
-                        } else {
-                            lexemaActual.append(c);
-                            estadoActual = estadoDesdeQ0;
+                    if (esOperadorAritmeticoSimple(c)) {
+                        procesarToken(String.valueOf(c), "q0");
+                    } else {
+                        String colKey2 = obtenerColumna(c);
+                        Map<String, String> filaQ0 = matrizTransicion.get("q0");
+                        String estadoDesdeQ0 = (filaQ0 != null) ? filaQ0.get(colKey2) : null;
+                        if (estadoDesdeQ0 != null) {
+                            if (esEstadoDeAceptacionDirecta(estadoDesdeQ0)) {
+                                procesarToken(String.valueOf(c), estadoDesdeQ0);
+                            } else if (esEstadoDeError(estadoDesdeQ0)) {
+                                registrarError(String.valueOf(c), estadoDesdeQ0);
+                            } else {
+                                lexemaActual.append(c);
+                                estadoActual = estadoDesdeQ0;
+                            }
                         }
                     }
                 }
             }
 
-            // Fin de archivo: emitir token pendiente si lo hay
             if (lexemaActual.length() > 0) {
                 if (estadoActual.equals("q22")) {
-                    // Cadena que nunca se cerró con "
                     registrarError(lexemaActual.toString(), "qE2");
                 } else {
                     procesarToken(lexemaActual.toString().trim(), estadoActual);
@@ -153,7 +151,6 @@ public class Lexer {
         }
     }
 
-    // Switch principal que asigna el ID y lo manda a la Tabla de Símbolos
     private void procesarToken(String lexema, String estadoFinal) {
         if (lexema.isEmpty()) return;
 
@@ -173,7 +170,7 @@ public class Lexer {
             case "DISTINTO": id = 2009; nombre = "TOKEN_DISTINTO"; break;
             case "ASC":      id = 2010; nombre = "TOKEN_ASC"; break;
             case "DESC":     id = 2011; nombre = "TOKEN_DESC"; break;
-            case "COMO":     id = 2012; nombre = "TOKEN_COMO"; break;
+//            case "COMO":     id = 2012; nombre = "TOKEN_COMO"; break;
             case "CONTAR":   id = 2013; nombre = "TOKEN_CONTAR"; break;
             case "PROMEDIO": id = 2014; nombre = "TOKEN_PROMEDIO"; break;
             case "SUMA":     id = 2015; nombre = "TOKEN_SUMA"; break;
@@ -190,6 +187,11 @@ public class Lexer {
             case ">=": id = 1004; nombre = "TOKEN_MAYOR_IGUAL"; break;
             case "<=": id = 1005; nombre = "TOKEN_MENOR_IGUAL"; break;
             case "!=": id = 1006; nombre = "TOKEN_DIFERENTE"; break;
+
+            // Operadores aritméticos (1100)
+            case "+": id = 1101; nombre = "TOKEN_MAS";    break;
+            case "-": id = 1102; nombre = "TOKEN_MENOS";  break;
+            case "/": id = 1103; nombre = "TOKEN_SLASH";  break;
 
             // Símbolos Especiales (3000)
             case ",": id = 3001; nombre = "TOKEN_COMA"; break;
@@ -239,12 +241,15 @@ public class Lexer {
         pilaErrores.push(new Token(lexema, nombre, id));
     }
 
-    // --- Utils ---
     private String obtenerColumna(char c) {
         if (Character.isWhitespace(c)) return "ws";
         if (Character.isDigit(c)) return String.valueOf(c);
         if (Character.isLetter(c)) return String.valueOf(Character.toLowerCase(c));
         return String.valueOf(c);
+    }
+
+    private boolean esOperadorAritmeticoSimple(char c) {
+        return c == '+' || c == '-' || c == '/';
     }
 
 
@@ -265,7 +270,7 @@ public class Lexer {
         return estado.equals("qE") || estado.equals("qE2") || estado.equals("qE3");
     }
 
-    // Métodos para imprimir resultados
+
     public void imprimirTablaSimbolos() {
         System.out.println("\n--- TABLA DE SIMBOLOS ---");
         for (Token t : tablaSimbolos) {
