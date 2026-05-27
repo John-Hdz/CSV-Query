@@ -7,6 +7,7 @@ module org.example.csvquery {
     requires org.kordamp.bootstrapfx.core;
     requires com.opencsv;
     requires org.fxmisc.richtext;
+    requires java.desktop;
 
     opens org.example.csvquery to javafx.fxml;
     exports org.example.csvquery;

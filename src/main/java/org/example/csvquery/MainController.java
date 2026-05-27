@@ -26,6 +26,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.awt.Desktop;
+import java.io.File;
+
 public class MainController implements Initializable {
 
     // ── Root ─────────────────────────────────────────────────
@@ -949,5 +952,22 @@ public class MainController implements Initializable {
         Alert a = new Alert(Alert.AlertType.WARNING);
         a.setTitle(titulo); a.setHeaderText(null); a.setContentText(msg);
         a.showAndWait();
+    }
+
+    // ABRIR DOCUMENTACION
+    public void abrirDocumentacion() {
+        try {
+
+            File pdf = new File("src/main/resources/DOCUMENTACION_CSV_QUERY.pdf");
+
+            if (pdf.exists()) {
+                Desktop.getDesktop().open(pdf);
+            } else {
+                System.out.println("No se encontró el PDF.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

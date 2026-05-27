@@ -1,18 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
 <?import javafx.scene.layout.*?>
 
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
-<BorderPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:id="rootPane"
-            fx:controller="org.example.csvquery.MainController"
-            prefWidth="1140" prefHeight="920"
-            styleClass="root-pane"
-            stylesheets="@csv-query.css">
+<BorderPane fx:id="rootPane" prefHeight="920" prefWidth="1140" styleClass="root-pane" stylesheets="@csv-query.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.csvquery.MainController">
 
     <!-- ═══════════════════════ TOPBAR ═══════════════════════ -->
     <top>
@@ -20,24 +12,24 @@
 
             <!-- Logo -->
             <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 20 0 16; -fx-min-height: 48;">
-                <Label text="CSV-QUERY" styleClass="logo"/>
+                <Label styleClass="logo" text="CSV-QUERY" />
             </HBox>
 
-            <Region styleClass="topbar-separator"/>
+            <Region styleClass="topbar-separator" />
 
-            <Button fx:id="btnAbrirCSV"   text="📄  Abrir CSV"       onAction="#onAbrirCSV"       styleClass="btn-topbar"/>
-            <Button fx:id="btnLimpiar"    text="✕  Limpiar Consola"  onAction="#onLimpiarConsola" styleClass="btn-topbar"/>
+            <Button fx:id="btnAbrirCSV" onAction="#onAbrirCSV" styleClass="btn-topbar" text="📄  Abrir CSV" />
+            <Button fx:id="btnLimpiar" onAction="#onLimpiarConsola" styleClass="btn-topbar" text="✕  Limpiar Consola" />
 
-            <Region HBox.hgrow="ALWAYS"/>
+            <Region HBox.hgrow="ALWAYS" />
 
             <!-- Theme toggle -->
-            <Button fx:id="btnTema" text="☀ Tema Claro" onAction="#onToggleTema" styleClass="btn-theme"/>
+            <Button fx:id="btnTema" onAction="#onToggleTema" styleClass="btn-theme" text="☀ Tema Claro" />
 
-            <Region style="-fx-min-width: 8;"/>
+            <Region style="-fx-min-width: 8;" />
 
-            <Button fx:id="btnEjecutar" text="⚡  Ejecutar Consulta" onAction="#onEjecutarConsulta" styleClass="btn-execute"/>
+            <Button fx:id="btnEjecutar" onAction="#onEjecutarConsulta" styleClass="btn-execute" text="⚡  Ejecutar Consulta" />
 
-            <Region style="-fx-min-width: 10;"/>
+            <Region style="-fx-min-width: 10;" />
         </HBox>
     </top>
 
@@ -46,14 +38,14 @@
         <HBox spacing="0">
 
             <!-- ─── LEFT: Editor + Results ─── -->
-            <VBox HBox.hgrow="ALWAYS" spacing="0">
+            <VBox spacing="0" HBox.hgrow="ALWAYS">
 
                 <!-- ── Editor Tab Bar ── -->
                 <HBox alignment="CENTER_LEFT" styleClass="editor-tabbar">
                     <HBox alignment="CENTER" spacing="8" styleClass="editor-active-tab">
-                        <Label text="&lt;/&gt;" styleClass="tab-icon"/>
-                        <Label text="query_editor.sql"  styleClass="tab-filename"/>
-                        <Label fx:id="lblEstado" text="● LISTO" styleClass="lbl-estado"/>
+                        <Label styleClass="tab-icon" text="&lt;/&gt;" />
+                        <Label styleClass="tab-filename" text="query_editor.sql" />
+                        <Label fx:id="lblEstado" styleClass="lbl-estado" text="● LISTO" />
                     </HBox>
                 </HBox>
 
@@ -63,26 +55,23 @@
                      dividerPositions="0.35" = editor ocupa 35% del alto,
                      resultados el 65% restante. El usuario puede arrastrar.
                 ═══════════════════════════════════════════════════════ -->
-                <SplitPane orientation="VERTICAL"
-                           dividerPositions="0.35"
-                           VBox.vgrow="ALWAYS"
-                           styleClass="main-split-pane">
+                <SplitPane dividerPositions="0.35" orientation="VERTICAL" styleClass="main-split-pane" VBox.vgrow="ALWAYS">
 
                     <!-- ── Panel superior: editor + statusbar ── -->
                     <VBox minHeight="80" styleClass="editor-split-top">
 
                         <!-- SQL Editor (CodeArea se inyecta aquí desde el controller) -->
-                        <StackPane fx:id="editorContainer" VBox.vgrow="ALWAYS"/>
+                        <StackPane fx:id="editorContainer" VBox.vgrow="ALWAYS" />
 
                         <!-- Status Bar -->
                         <HBox alignment="CENTER_LEFT" spacing="16" styleClass="statusbar">
-                            <Label text="ARCHIVO:"  styleClass="statusbar-label"/>
-                            <Label fx:id="lblArchivo"  text="DATOS.CSV"     styleClass="statusbar-value"/>
-                            <Label text="COLUMNAS:" styleClass="statusbar-label"/>
-                            <Label fx:id="lblColumnas" text="8"             styleClass="statusbar-value"/>
-                            <Region HBox.hgrow="ALWAYS"/>
-                            <Label fx:id="lblEncoding" text="UTF-8"         styleClass="statusbar-meta"/>
-                            <Label fx:id="lblCursor"   text="LÍNEA 1, COL 1" styleClass="statusbar-meta"/>
+                            <Label styleClass="statusbar-label" text="ARCHIVO:" />
+                            <Label fx:id="lblArchivo" styleClass="statusbar-value" text="DATOS.CSV" />
+                            <Label styleClass="statusbar-label" text="COLUMNAS:" />
+                            <Label fx:id="lblColumnas" styleClass="statusbar-value" text="8" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Label fx:id="lblEncoding" styleClass="statusbar-meta" text="UTF-8" />
+                            <Label fx:id="lblCursor" styleClass="statusbar-meta" text="LÍNEA 1, COL 1" />
                         </HBox>
                     </VBox>
 
@@ -91,71 +80,57 @@
 
                         <!-- Results Tabs -->
                         <HBox alignment="CENTER_LEFT" styleClass="results-tabbar">
-                            <Button fx:id="tabResultado"  text="🟩  RESULTADO DE CONSULTA"  onAction="#onTabResultado"  styleClass="btn-tab-active"/>
-                            <Button fx:id="tabLexico"     text="🌿  ANÁLISIS SINTÁCTICO"     onAction="#onTabLexico"     styleClass="btn-tab"/>
-                            <Button fx:id="tabTokens"     text="🔷  TOKENS"                 onAction="#onTabTokens"     styleClass="btn-tab"/>
-                            <Button fx:id="tabConsola"    text="🖥  CONSOLA DE COMPILACIÓN" onAction="#onTabConsola"    styleClass="btn-tab"/>
-                            <Button fx:id="tabCodigo"     text="🐍  CÓDIGO INTERMEDIO"      onAction="#onTabCodigo"     styleClass="btn-tab"/>
+                            <Button fx:id="tabResultado" onAction="#onTabResultado" styleClass="btn-tab-active" text="🟩  RESULTADO DE CONSULTA" />
+                            <Button fx:id="tabLexico" onAction="#onTabLexico" styleClass="btn-tab" text="🌿  ANÁLISIS SINTÁCTICO" />
+                            <Button fx:id="tabTokens" onAction="#onTabTokens" styleClass="btn-tab" text="🔷  TOKENS" />
+                            <Button fx:id="tabConsola" onAction="#onTabConsola" styleClass="btn-tab" text="🖥  CONSOLA DE COMPILACIÓN" />
+                            <Button fx:id="tabCodigo" onAction="#onTabCodigo" styleClass="btn-tab" text="🐍  CÓDIGO INTERMEDIO" />
                         </HBox>
 
                         <!-- StackPane: apila tablaResultados y panelLexico -->
                         <StackPane VBox.vgrow="ALWAYS">
 
-                            <TableView fx:id="tablaResultados"
-                                       styleClass="results-table"
-                                       visible="true">
+                            <TableView fx:id="tablaResultados" styleClass="results-table" visible="true">
                                 <placeholder>
-                                    <Label text="Ejecuta una consulta para ver los resultados"
-                                           styleClass="table-placeholder"/>
+                                    <Label styleClass="table-placeholder" text="Ejecuta una consulta para ver los resultados" />
                                 </placeholder>
                             </TableView>
 
-                            <ScrollPane fx:id="panelLexico"
-                                        fitToWidth="true"
-                                        visible="false"
-                                        styleClass="panel-lexico-scroll">
+                            <ScrollPane fx:id="panelLexico" fitToWidth="true" styleClass="panel-lexico-scroll" visible="false">
                                 <content>
-                                    <VBox fx:id="vboxLexico"
-                                          spacing="10"
-                                          style="-fx-padding: 14 14 14 14;"/>
+                                    <VBox fx:id="vboxLexico" spacing="10" style="-fx-padding: 14 14 14 14;" />
                                 </content>
                             </ScrollPane>
 
                             <!-- Panel Consola de Compilación -->
-                            <VBox fx:id="panelConsola" visible="false" styleClass="consola-root">
+                            <VBox fx:id="panelConsola" styleClass="consola-root" visible="false">
                                 <HBox alignment="CENTER_LEFT" spacing="10" styleClass="consola-header">
-                                    <Label text="⬤" style="-fx-text-fill:#ff5f57; -fx-font-size:10px;"/>
-                                    <Label text="⬤" style="-fx-text-fill:#febc2e; -fx-font-size:10px;"/>
-                                    <Label text="⬤" style="-fx-text-fill:#28c840; -fx-font-size:10px;"/>
-                                    <Region style="-fx-min-width:8;"/>
-                                    <Label text="CONSOLA DE COMPILACIÓN" styleClass="consola-header-title"/>
+                                    <Label style="-fx-text-fill:#ff5f57; -fx-font-size:10px;" text="⬤" />
+                                    <Label style="-fx-text-fill:#febc2e; -fx-font-size:10px;" text="⬤" />
+                                    <Label style="-fx-text-fill:#28c840; -fx-font-size:10px;" text="⬤" />
+                                    <Region style="-fx-min-width:8;" />
+                                    <Label styleClass="consola-header-title" text="CONSOLA DE COMPILACIÓN" />
                                 </HBox>
-                                <ScrollPane fx:id="consolaScroll" fitToWidth="true"
-                                            VBox.vgrow="ALWAYS" styleClass="consola-scroll">
+                                <ScrollPane fx:id="consolaScroll" fitToWidth="true" styleClass="consola-scroll" VBox.vgrow="ALWAYS">
                                     <content>
-                                        <VBox fx:id="vboxConsola" styleClass="consola-body" spacing="0"/>
+                                        <VBox fx:id="vboxConsola" spacing="0" styleClass="consola-body" />
                                     </content>
                                 </ScrollPane>
                             </VBox>
-                            <VBox fx:id="panelCodigo" visible="false" styleClass="panel-codigo-root">
+                            <VBox fx:id="panelCodigo" styleClass="panel-codigo-root" visible="false">
 
                                 <!-- Header del panel -->
                                 <HBox alignment="CENTER_LEFT" spacing="10" styleClass="panel-codigo-header">
-                                    <Label text="🐍" style="-fx-font-size: 14px;"/>
-                                    <Label text="CÓDIGO INTERMEDIO GENERADO" styleClass="panel-codigo-title"/>
-                                    <Region HBox.hgrow="ALWAYS"/>
-                                    <Label text="Python / Pandas" styleClass="panel-codigo-badge"/>
+                                    <Label style="-fx-font-size: 14px;" text="🐍" />
+                                    <Label styleClass="panel-codigo-title" text="CÓDIGO INTERMEDIO GENERADO" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="panel-codigo-badge" text="Python / Pandas" />
                                 </HBox>
 
                                 <!-- Área de código con scroll -->
-                                <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS"
-                                            styleClass="panel-codigo-scroll">
+                                <ScrollPane fitToWidth="true" styleClass="panel-codigo-scroll" VBox.vgrow="ALWAYS">
                                     <content>
-                                        <TextArea fx:id="areaCodigo"
-                                                  editable="false"
-                                                  wrapText="false"
-                                                  styleClass="area-codigo-python"
-                                                  promptText="El código Python generado aparecerá aquí después de ejecutar una consulta."/>
+                                        <TextArea fx:id="areaCodigo" editable="false" promptText="El código Python generado aparecerá aquí después de ejecutar una consulta." styleClass="area-codigo-python" wrapText="false" />
                                     </content>
                                 </ScrollPane>
 
@@ -180,12 +155,12 @@
                         </image>
                     </ImageView>
                     <VBox spacing="2">
-                        <Label text="TECNOLÓGICO&#10;NACINAL DE MÉXICO&#10;EN CELAYA" styleClass="dict-title"/>
+                        <Label styleClass="dict-title" text="TECNOLÓGICO&#10;NACINAL DE MÉXICO&#10;EN CELAYA" />
 <!--                        <Label text="v10.4-estable"        styleClass="dict-version"/>-->
                     </VBox>
                 </HBox>
 
-                <Label text="LENGUAJES Y AUTÓMATAS ||" styleClass="dict-title"/>
+                <Label styleClass="dict-title" text="LENGUAJES Y AUTÓMATAS ||" />
 
                 <!-- Columna ID (activa) -->
                 <VBox alignment="CENTER" spacing="10">
@@ -194,7 +169,7 @@
                             <Image url="@diego.jpg" />
                         </image>
                     </ImageView>
-                    <Label text="DIEGO RAMIREZ VÁZQUEZ" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
+                    <Label styleClass="dict-col-name" text="DIEGO RAMIREZ VÁZQUEZ" HBox.hgrow="ALWAYS" />
                 </VBox>
 
                 <VBox alignment="CENTER" spacing="10">
@@ -203,7 +178,7 @@
                             <Image url="@ioni.jpg" />
                         </image>
                     </ImageView>
-                    <Label text="JUAN JOSÉ HERNÁNDEZ PÉREZ" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
+                    <Label styleClass="dict-col-name" text="JUAN JOSÉ HERNÁNDEZ PÉREZ" HBox.hgrow="ALWAYS" />
                 </VBox>
 
                 <VBox alignment="CENTER" spacing="10">
@@ -212,23 +187,28 @@
                             <Image url="@vladi.jpg" />
                         </image>
                     </ImageView>
-                    <Label text="ALÍ VLADÍMIR CAÑADA GARCÍA" HBox.hgrow="ALWAYS" styleClass="dict-col-name"/>
+                    <Label styleClass="dict-col-name" text="ALÍ VLADÍMIR CAÑADA GARCÍA" HBox.hgrow="ALWAYS" />
                 </VBox>
+            <Label layoutX="11.0" layoutY="771.0" style="-fx-border-color: -color-border; -fx-border-width: 1 0 0 0;" styleClass="dict-section-title" />
+            <HBox alignment="TOP_CENTER" prefHeight="100.0" prefWidth="200.0">
+               <children>
+                  <Button mnemonicParsing="false" text="Visualizar documentacion." onAction="#abrirDocumentacion"/>
+               </children>
+            </HBox>
 
-                <Region VBox.vgrow="ALWAYS"/>
+                <Region VBox.vgrow="ALWAYS" />
 
                 <!-- Metadatos -->
-                <Label text="METADATOS" styleClass="dict-section-title"
-                       style="-fx-border-color: -color-border; -fx-border-width: 1 0 0 0;"/>
+                <Label style="-fx-border-color: -color-border; -fx-border-width: 1 0 0 0;" styleClass="dict-section-title" text="METADATOS" />
 
-                <HBox styleClass="meta-cards-row" spacing="4">
-                    <VBox HBox.hgrow="ALWAYS" spacing="4" styleClass="meta-card">
-                        <Label text="FILAS"              styleClass="meta-card-label"/>
-                        <Label fx:id="lblFilas" text="—" styleClass="meta-card-value"/>
+                <HBox spacing="4" styleClass="meta-cards-row">
+                    <VBox spacing="4" styleClass="meta-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="meta-card-label" text="FILAS" />
+                        <Label fx:id="lblFilas" styleClass="meta-card-value" text="—" />
                     </VBox>
-                    <VBox HBox.hgrow="ALWAYS" spacing="4" styleClass="meta-card">
-                        <Label text="PESO"               styleClass="meta-card-label"/>
-                        <Label fx:id="lblPeso"  text="—" styleClass="meta-card-value"/>
+                    <VBox spacing="4" styleClass="meta-card" HBox.hgrow="ALWAYS">
+                        <Label styleClass="meta-card-label" text="PESO" />
+                        <Label fx:id="lblPeso" styleClass="meta-card-value" text="—" />
                     </VBox>
                 </HBox>
 
