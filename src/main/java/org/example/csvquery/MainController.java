@@ -81,7 +81,7 @@ public class MainController implements Initializable {
     private List<Token>  ultimosErrores = new ArrayList<>();
     private List<String> logConsola     = new ArrayList<>();
     private String       ultimoScriptPy = "";
-    private org.example.csvquery.models.ast.NodoConsulta ultimoAST = null;
+    private org.example.csvquery.models.ast.NodoAST ultimoAST = null;
 
     private enum TipoEntrada { SISTEMA, OK, INFO, ERROR, SEPARADOR }
 
@@ -125,7 +125,7 @@ public class MainController implements Initializable {
 
     // palabras reservadas y funciones
     private static final String[] KEYWORDS = new String[] {
-            "TRAER", "DESDE", "DONDE", "Y", "O", "ORDENAR", "POR", "ASC", "DESC", "LIMITAR", "DISTINTO", "GUARDAR", "EN"
+            "TRAER", "DESDE", "DONDE", "Y", "O", "ORDENAR", "POR", "ASC", "DESC", "LIMITAR", "DISTINTO", "GUARDAR", "EN", "INSERTAR", "VALORES", "ACTUALIZAR", "ELIMINAR"
     };
     private static final String[] FUNCTIONS = new String[] {
             "CONTAR", "SUMA", "PROMEDIO", "MAXIMO", "MINIMO"
@@ -292,7 +292,7 @@ public class MainController implements Initializable {
         consolaEntradas.add(EntradaConsola.sistema("Iniciando análisis sintáctico..."));
         setEstado("ANÁLISIS SINTÁCTICO...", "lbl-estado-running");
 
-        org.example.csvquery.models.ast.NodoConsulta ast;
+        org.example.csvquery.models.ast.NodoAST ast;
         try {
             Parser parser = new Parser(ultimosTokens);
             ast = parser.parsear();
@@ -548,7 +548,7 @@ public class MainController implements Initializable {
     // ══════════════════════════════════════════════════════════
 
     private void construirPanelSintactico(
-            org.example.csvquery.models.ast.NodoConsulta ast,
+            org.example.csvquery.models.ast.NodoAST ast,
             List<Token> tokens,
             List<Token> errores) {
 
